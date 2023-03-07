@@ -4,8 +4,7 @@
 ### Main command line interface for padsprod.
 
 Each `padsprod` command is mapped to a function which calls the correct
-padsprod class function. This file also handles discovering and reading in TAB
-files.
+padsprod class function. 
 """
 
 import argparse
@@ -32,9 +31,14 @@ from .exceptions import PadsprodException
 ################################################################################
 
 
+def command_export(args):
+    print("padsprod version: {}".format(__version__))
+    logging.debug("called args: " + str(args))
+    logging.info(command_export.__name__ + " Unimplemented!")
+
 def command_info(args):
     print("padsprod version: {}".format(__version__))
-    logging.status("Showing all support ops...")
+    logging.info(command_info.__name__ + " Unimplemented!")
 
 
 def main():
@@ -74,14 +78,31 @@ def main():
     # The top-level parser object
     parser = argparse.ArgumentParser(parents=[parent])
 
+    # Parser for all sch related commands
+    parent_sch = argparse.ArgumentParser(add_help=False)
+    parent_sch.add_argument(
+        "--page",
+        default=0,
+        type=int,
+        help="The sch sheet page.",
+    )
+
+    # Parser for all pcb related commands
+    parent_pcb = argparse.ArgumentParser(add_help=False)
+    parent_pcb.add_argument(
+        "--layer",
+        default="top",
+        help="The pcb layer.",
+    )
+
     # Parser for all output formatting related flags shared by multiple
     # commands.
     parent_format = argparse.ArgumentParser(add_help=False)
     parent_format.add_argument(
         "--output-format",
-        help="Address where apps are located",
-        choices=["terminal", "json"],
-        default="terminal",
+        help="Save file format",
+        choices=["sch", "pcb", "text", "asc", "pdf"],
+        default="pdf",
     )
 
     # Support multiple commands for this tool
@@ -92,10 +113,17 @@ def main():
     # Python argparse doesn't support grouping commands in subparsers as of
     # January 2021 :(. The best we can do now is order them logically.
 
+    export = subparser.add_parser(
+        "export",
+        parents=[parent, parent_sch, parent_pcb, parent_format],
+        help="Export from the provided sch and pcb file",
+    )
+    export.set_defaults(func=command_export)
+
     info = subparser.add_parser(
         "info",
-        parents=[parent, parent_format],
-        help="Verbose information about the connected board",
+        parents=[parent, parent_sch, parent_pcb, parent_format],
+        help="Verbose information about the provided sch and pcb file",
     )
     info.set_defaults(func=command_info)
 
