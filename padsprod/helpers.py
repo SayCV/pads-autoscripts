@@ -1,5 +1,5 @@
 """
-Various helper functions that tockloader uses. Mostly for interacting with
+Various helper functions that padsprod uses. Mostly for interacting with
 users in a nice way.
 """
 

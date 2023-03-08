@@ -1,4 +1,5 @@
-@echo off
+@chcp 65001
+@echo off&SetLocal EnableDelayedExpansion
 echo,
 echo,=====
 echo,SPDX-License-Identifier: (GPL-2.0+ OR MIT):
@@ -8,13 +9,18 @@ echo,
 echo,Copyright (c) 2023, SayCV
 echo,=====
 echo,
-@echo off&setLocal EnableDelayedExpansion
 
 cd /d "%~dp0"
 set "TOPDIR=%cd:\=/%"
 title "%~n0"
 
-if not exist .condaenv.cmd echo set condaenv=envSayCV>.condaenv.cmd
+call conda info --envs 2>&1 | tee .%~n0.info
+for /f "tokens=1-3 delims= " %%i in (.%~n0.info) do (
+    if "x%condaenv%" == "x" if not "x%%i" == "xbase" set condaenv=%%i
+)
+if exist .%~n0.info del .%~n0.info
+
+if not exist .condaenv.cmd echo set condaenv=%condaenv%>.condaenv.cmd
 call .condaenv.cmd
 
 if not "x%condaenv%" == "x" call activate %condaenv%

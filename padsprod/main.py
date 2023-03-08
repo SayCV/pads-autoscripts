@@ -23,8 +23,11 @@ import urllib.parse
 import argcomplete
 
 from . import helpers
+from . import cmd_export
 from ._version import __version__
 from .exceptions import PadsprodException
+
+logger = logging.getLogger(__name__)
 
 ################################################################################
 # Setup and parse command line arguments
@@ -33,13 +36,13 @@ from .exceptions import PadsprodException
 
 def command_export(args):
     print("padsprod version: {}".format(__version__))
-    logging.debug("called args: " + str(args))
-    logging.info(command_export.__name__ + " Unimplemented!")
+    logger.debug("called args: " + str(args))
+    logger.info("Export Command Unimplemented!")
+    cmd_export.run(args)
 
 def command_info(args):
     print("padsprod version: {}".format(__version__))
-    logging.info(command_info.__name__ + " Unimplemented!")
-
+    logger.info("Info Command Unimplemented!")
 
 def main():
     """
@@ -99,6 +102,11 @@ def main():
     # commands.
     parent_format = argparse.ArgumentParser(add_help=False)
     parent_format.add_argument(
+        "--file",
+        help="Open file path",
+        default="test.pcb",
+    )
+    parent_format.add_argument(
         "--output-format",
         help="Save file format",
         choices=["sch", "pcb", "text", "asc", "pdf"],
@@ -132,10 +140,10 @@ def main():
 
     # Warn about unknown arguments, suggest padsprod update.
     if len(unknown_args) > 0:
-        logging.warning(
+        logger.warning(
             "Unknown arguments passed. You may need to update padsprod.")
         for unknown_arg in unknown_args:
-            logging.warning('Unknown argument "{}"'.format(unknown_arg))
+            logger.warning('Unknown argument "{}"'.format(unknown_arg))
 
     # Concat the args before the command with those that were specified
     # after the command. This is a workaround because for some reason python
@@ -155,10 +163,10 @@ def main():
         try:
             args.func(args)
         except PadsprodException as e:
-            logging.error(e)
+            logger.error(e)
             sys.exit(1)
     else:
-        logging.error("Missing Command.\n")
+        logger.error("Missing Command.\n")
         parser.print_help()
         sys.exit(1)
 

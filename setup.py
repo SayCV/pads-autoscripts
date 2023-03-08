@@ -16,6 +16,12 @@ if mo:
 else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
 
+install_requires = [
+    "argcomplete >= 1.8.2",
+    "colorama >= 0.3.7",
+    "questionary >= 1.10.0",
+],
+
 setup(
     name="padsprod",
     version=verstr,
@@ -27,8 +33,5 @@ setup(
     packages=["padsprod"],
     entry_points={"console_scripts": ["padsprod = padsprod.main:main"]},
     include_package_data=True,
-    install_requires=[
-        "argcomplete >= 1.8.2",
-        "questionary >= 1.10.0",
-    ],
+    install_requires=install_requires,
 )

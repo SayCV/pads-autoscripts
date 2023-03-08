@@ -1,5 +1,4 @@
-#!python.exe
-# EASY-INSTALL-ENTRY-SCRIPT: 'padsprod','console_scripts','padsprod'
+#!/usr/bin/env python3
 
 import sys
 
