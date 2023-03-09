@@ -97,6 +97,11 @@ class Layer(object):
 
 class PCB(object):
     def __init__(self, board_file):
+        dirname = path(__file__).resolve().parent
+        macro_dir = path.joinpath(dirname, 'macros')
+        if not path.exists(macro_dir):
+            path.mkdir(macro_dir)
+        
         self.name = os.path.splitext(os.path.basename(board_file))[0]
         self.mputils = mputils()
         self.app = self.mputils.PADSPCBApplication()
@@ -240,7 +245,9 @@ class PCB(object):
         color_idxs = []
         for _, item in enumerate(PPcbLayerColorType):
             color_idx = PPcbDefaultPaletteColorList.get_idx('silver')
-            if item == PPcbLayerColorType.ppcbLayerColorRefDes:
+            if item == PPcbLayerColorType.ppcbLayerColorPad:
+                color_idx = PPcbDefaultPaletteColorList.get_idx('silver')
+            elif item == PPcbLayerColorType.ppcbLayerColorRefDes:
                 color_idx = PPcbDefaultPaletteColorList.get_idx('white')
             color_idxs.append(color_idx)
 

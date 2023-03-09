@@ -4,6 +4,7 @@ PPCB_EXPORT_PDF_BOT_SILK_PDC = 'ppcb-export-pdf-bot-silk-pdc'
 
 MACRO_OPS_1 = r"""
 Application.ExecuteCommand("Display Colors Setup")
+DisplayColorsSetupDlg.ApplyImmediately = false
 DisplayColorsSetupDlg.DefaultPalette.Click()
 DisplayColorsSetupDlg.Apply.Click()
 DisplayColorsSetupDlg.Ok.Click()
