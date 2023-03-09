@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["export", "--output-format=pdf", "--debug"]
+            "args": ["export", "--to=pdf", "--debug"]
         },
         {
             "name": "Python: Remote Attach",

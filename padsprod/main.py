@@ -74,6 +74,18 @@ def main():
         version=__version__,
         help="Print padsprod version and exit",
     )
+    parent.add_argument(
+        "-i", "--input",
+        dest='input',
+        help="Open file path",
+        default="test.pcb",
+    )
+    parent.add_argument(
+        "-o", "--output",
+        dest='output',
+        help="Save file path",
+        default=None,
+    )
 
     # Get the list of arguments before any command
     before_command_args = parent.parse_known_args()
@@ -94,7 +106,8 @@ def main():
     parent_pcb = argparse.ArgumentParser(add_help=False)
     parent_pcb.add_argument(
         "--layer",
-        default="top",
+        default=1,
+        type=int,
         help="The pcb layer.",
     )
 
@@ -102,15 +115,22 @@ def main():
     # commands.
     parent_format = argparse.ArgumentParser(add_help=False)
     parent_format.add_argument(
-        "--file",
-        help="Open file path",
-        default="test.pcb",
+        "-f", "-r",
+        "--from", "--read",
+        dest='in_format',
+        metavar='FORMAT',
+        help="sch|pcb",
+        choices=["sch", "pcb"],
+        default=None,
     )
     parent_format.add_argument(
-        "--output-format",
-        help="Save file format",
-        choices=["sch", "pcb", "text", "asc", "pdf"],
-        default="pdf",
+        "-t", "-w",
+        "--to", "--write",
+        dest='output_format',
+        metavar='FORMAT',
+        help="sch|pcb|asc|text|pdf",
+        choices=["sch", "pcb", "asc", "text", "pdf"],
+        default=None,
     )
 
     # Support multiple commands for this tool
