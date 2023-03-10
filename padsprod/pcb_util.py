@@ -115,6 +115,9 @@ class PCB(object):
         logger.status(f"{self.app.StatusBarText}")
         logger.status(f'PADS Layout Version: {self.app.Version}')
         logger.status(f'PCB Name: {self.board.Name}')
+        if self.board.Name == 'default.pcb' and not self.board.Name == board_file.name:
+            logger.warning("No input file found")
+            pass
 
     def info(self):
         logger.info(f'PCB Layers: {self.board.ElectricalLayerCount}')
@@ -264,6 +267,7 @@ class PCB(object):
         macro_file = self._config_macro_ppcb_export_pdf(pdf, 'Bottom')
         self.run_macro(macro_file)
 
-    def close(self):
-        self.board.SaveAsTemp('default.pcb')
+    def close(self, save=True):
+        if save:
+            self.board.SaveAsTemp('default.pcb')
         self.app.Quit()

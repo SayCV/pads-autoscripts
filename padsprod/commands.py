@@ -56,7 +56,7 @@ def run_export(args):
 
     output = args.output
     if output is None:
-        output = path.joinpath(input.parent, file_name + '.' + args.out_format)
+        output = path.joinpath(input.parent, file_name + '.' + out_format)
 
     if in_format == 'sch':
         logger.info(f"Export Command Unimplemented! <- {in_format}")
@@ -67,6 +67,6 @@ def run_export(args):
         pcb.run_macro_ppcb_reset_default_palette()
         pcb.run_macro_ppcb_export_pdf(output)
         pcb.close()
-        logger.status(f"Export to {output} Done.")
+        logger.status(f"Export to {out_format} Done.")
     else:
         logger.info(f"Export Command Unimplemented! <- {in_format}")
