@@ -1,6 +1,6 @@
 import sys
 
-from setuptools import setup
+from setuptools import find_packages, setup
 
 if sys.version_info < (3, 0):
     sys.exit("Sorry, Python < 3.0 is not supported")
@@ -20,6 +20,7 @@ install_requires = [
     "argcomplete >= 1.8.2",
     "colorama >= 0.3.7",
     "questionary >= 1.10.0",
+    #"mputils @ file:///D:/mputils",
     "mputils @ git+https://github.com/saycv/mputils@dev#egg=mputils",
 ],
 
@@ -31,7 +32,7 @@ setup(
     author="padsprod project developers",
     author_email="",
     url="https://github.com/saycv/padsprod",
-    packages=["padsprod"],
+    packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
     entry_points={"console_scripts": ["padsprod = padsprod.main:main"]},
     include_package_data=True,
     install_requires=install_requires,
