@@ -22,7 +22,7 @@ install_requires = [
     "questionary >= 1.10.0",
     #"mputils @ file:///D:/mputils",
     "mputils @ git+https://github.com/saycv/mputils@dev#egg=mputils",
-],
+]
 
 setup(
     name="padsprod",

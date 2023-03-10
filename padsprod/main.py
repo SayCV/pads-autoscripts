@@ -100,6 +100,24 @@ def main():
         type=int,
         help="The sch sheet page.",
     )
+    parent_sch.add_argument(
+        "--enable-hyperlinks-attr",
+        action="store_true",
+        help="Create hyperlinks that will display part attributes.",
+    )
+    parent_sch.add_argument(
+        "--enable-hyperlinks-nets",
+        action="store_true",
+        help="Create hyperlinks that will pan through nets.",
+    )
+    parent_sch.add_argument(
+        "--pdf-color-scheme",
+        type=int,
+        #metavar='[0, 1, 2]',
+        help="The color scheme setting.",
+        choices=[0, 1, 2],
+        default=2,
+    )
 
     # Parser for all pcb related commands
     parent_pcb = argparse.ArgumentParser(add_help=False)
@@ -127,8 +145,8 @@ def main():
         "--to", "--write",
         dest='out_format',
         metavar='FORMAT',
-        help="sch|pcb|asc|text|pdf",
-        choices=["sch", "pcb", "asc", "text", "pdf"],
+        help="sch|pcb|asc|txt|pdf",
+        choices=["sch", "pcb", "asc", "txt", "pdf"],
         default=None,
     )
 
