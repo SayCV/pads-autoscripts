@@ -16,10 +16,6 @@ if mo:
 else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
 
-data_files = [
-    ('', ['padsprod/config/*.tpl']),
-],
-
 install_requires = [
     "argcomplete >= 1.8.2",
     "colorama >= 0.3.7",
@@ -37,7 +33,6 @@ setup(
     author_email="",
     url="https://github.com/saycv/padsprod",
     packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
-    data_files=data_files,
     entry_points={"console_scripts": ["padsprod = padsprod.main:main"]},
     include_package_data=True,
     install_requires=install_requires,
