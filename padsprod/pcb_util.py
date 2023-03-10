@@ -8,6 +8,7 @@ from pathlib import Path as path
 from string import Template
 
 from mputils import *
+from padsprod.helpers import PADSPROD_ROOT
 from .pcb_constants import *
 from .color_constants import colors
 
@@ -96,33 +97,34 @@ class Layer(object):
 
 
 class PCB(object):
-    def __init__(self, board_file):
-        dirname = path(__file__).resolve().parent
-        macro_dir = path.joinpath(dirname, 'macros')
+    def __init__(self, board_file, visible):
+        macro_dir = path.joinpath(PADSPROD_ROOT, 'macros')
         if not path.exists(macro_dir):
             path.mkdir(macro_dir)
         
+        logger.status(f'Opening: {board_file}')
         self.name = os.path.splitext(os.path.basename(board_file))[0]
         self.mputils = mputils()
         self.app = self.mputils.PADSPCBApplication()
-        self.app.Visible = True
+        self.app.Visible = visible
         self.board = IPowerPCBDoc(self.app.OpenDocument(board_file))
+        self.layers = self.board.Layers
+        
         self.app.StatusBarText = 'Running in python: ' + \
             str(datetime.datetime.now())
-        self.layers = self.board.Layers
-        self.info()
+        logger.status(f"{self.app.StatusBarText}")
+        logger.status(f'PADS Layout Version: {self.app.Version}')
+        logger.status(f'PCB Name: {self.board.Name}')
 
     def info(self):
-        logger.debug(f'PADS Layout Version: {self.app.Version}')
-        logger.debug(f'PCB Name: {self.board.Name}')
-        logger.debug(f'PCB Layers: {self.board.ElectricalLayerCount}')
+        logger.info(f'PCB Layers: {self.board.ElectricalLayerCount}')
 
         metal_layers_count = 0
         diele_layers_count = 0
         pcb_thick = 0
         for _layer in self.layers:
             layer = IPowerPCBLayer(_layer)
-            logger.debug(f'Layer Name: {layer.Name}')
+            logger.info(f'Layer Name: {layer.Name}')
             if layer.type == ppcbLayerRouting or layer.type == ppcbLayerComponent:
                 metal_layers_count += 1
                 pcb_thick += layer.CopperThickness
@@ -134,6 +136,9 @@ class PCB(object):
             f'Number of layers = {self.layers.Count}, including {metal_layers_count} metal, {diele_layers_count} dielectric')
         print('Thickness = {0:.2f}{1}'.format(
             pcb_thick * 1, strPPcbUnit[self.board.unit]))
+
+    def set_visible(self, visible):
+        self.app.Visible = visible
 
     def set_plot_directory(self, plot_directory):
         self.plot_directory = plot_directory
@@ -194,12 +199,12 @@ class PCB(object):
         self.set_layer_color()
 
     def run_macro(self, macro_file):
-        dirname = path(__file__).resolve().parent
+        dirname = PADSPROD_ROOT
         file = path.joinpath(dirname, 'macros', macro_file)
         self.app.RunMacro(file, 'Macro1')
 
     def run_macro_ppcb_reset_default_palette(self):
-        dirname = path(__file__).resolve().parent
+        dirname = PADSPROD_ROOT
         origin = mcrPpcbCmdList['PpcbResetDefaultPaletteMacro']
         macro_file = path.joinpath(dirname, 'macros', origin)
 
@@ -211,7 +216,7 @@ class PCB(object):
         self.run_macro(macro_file)
 
     def _config_macro_ppcb_export_pdf(self, pdf, layer_name):
-        dirname = path(__file__).resolve().parent
+        dirname = PADSPROD_ROOT
         origin = mcrPpcbCmdList['PpcbExportPdfMacro']
         macro_file = path.joinpath(dirname, 'macros', origin)
 
@@ -260,4 +265,5 @@ class PCB(object):
         self.run_macro(macro_file)
 
     def close(self):
+        self.board.SaveAsTemp('default.pcb')
         self.app.Quit()

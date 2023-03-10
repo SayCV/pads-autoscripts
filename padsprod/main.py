@@ -23,7 +23,7 @@ import urllib.parse
 import argcomplete
 
 from . import helpers
-from . import cmd_export
+from . import commands
 from ._version import __version__
 from .exceptions import PadsprodException
 
@@ -37,12 +37,11 @@ logger = logging.getLogger(__name__)
 def command_export(args):
     print("padsprod version: {}".format(__version__))
     logger.debug("called args: " + str(args))
-    logger.info("Export Command Unimplemented!")
-    cmd_export.run(args)
+    commands.run_export(args)
 
 def command_info(args):
     print("padsprod version: {}".format(__version__))
-    logger.info("Info Command Unimplemented!")
+    commands.run_info(args)
 
 def main():
     """
@@ -126,7 +125,7 @@ def main():
     parent_format.add_argument(
         "-t", "-w",
         "--to", "--write",
-        dest='output_format',
+        dest='out_format',
         metavar='FORMAT',
         help="sch|pcb|asc|text|pdf",
         choices=["sch", "pcb", "asc", "text", "pdf"],

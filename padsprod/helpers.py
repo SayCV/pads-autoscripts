@@ -7,10 +7,13 @@ import argparse
 import binascii
 import string
 import sys
+from pathlib import Path as path
 
 import colorama
 import questionary
 
+
+PADSPROD_ROOT = path(__file__).resolve().parent
 
 def set_terminal_title(title):
     if sys.stdout.isatty():
