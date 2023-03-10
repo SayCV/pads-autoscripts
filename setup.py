@@ -20,6 +20,7 @@ install_requires = [
     "argcomplete >= 1.8.2",
     "colorama >= 0.3.7",
     "questionary >= 1.10.0",
+    "mputils @ git+https://github.com/saycv/mputils@dev#egg=mputils",
 ],
 
 setup(
