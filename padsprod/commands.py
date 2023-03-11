@@ -18,6 +18,9 @@ from . import sch_util, pcb_util
 logger = logging.getLogger(__name__)
 
 def run_info(args):
+    if args.input is None:
+        logger.error("Please provide input file!")
+        sys.exit(1)
     input = path(args.input).absolute()
 
     in_format = args.in_format
@@ -28,7 +31,11 @@ def run_info(args):
         sys.exit(1)
 
     if in_format == 'sch':
-        logger.info(f"Info Command Unimplemented! -- {in_format}")
+        board_file = input
+        set_visible = False
+        sch = sch_util.SCH(board_file, set_visible)
+        sch.info()
+        sch.close()
     elif in_format == 'pcb':
         board_file = input
         set_visible = False
@@ -39,6 +46,9 @@ def run_info(args):
         logger.info(f"Info Command Unimplemented! -- {in_format}")
 
 def run_export(args):
+    if args.input is None:
+        logger.error("Please provide input file!")
+        sys.exit(1)
     input = path(args.input).absolute()
     file_name = input.stem
     if not input.exists():

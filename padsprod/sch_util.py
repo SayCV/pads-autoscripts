@@ -127,81 +127,26 @@ class SCH(object):
 
     def info(self):
         logger.info(f'SCH Sheets: {self.board.Sheets.Count}')
-
-        metal_layers_count = 0
-        diele_layers_count = 0
-        pcb_thick = 0
-        for _layer in self.layers:
-            layer = IPowerPCBLayer(_layer)
-            logger.info(f'Layer Name: {layer.Name}')
-            if layer.type == ppcbLayerRouting or layer.type == ppcbLayerComponent:
-                metal_layers_count += 1
-                pcb_thick += layer.CopperThickness
-            else:
-                diele_layers_count += 1
-            pcb_thick += layer.GetDielectricThickness(ppcbDielectricLayerAbove)
-        print('Stackup:')
-        print(
-            f'Number of layers = {self.layers.Count}, including {metal_layers_count} metal, {diele_layers_count} dielectric')
-        print('Thickness = {0:.2f}{1}'.format(
-            pcb_thick * 1, strPLogUnit[self.board.unit]))
+        for _sheet in self.sheets:
+            sheet = IPowerLogicSheet(_sheet)
+            logger.info(f'Sheet Name: {sheet.Name}')
 
     def set_visible(self, visible):
         self.app.Visible = visible
 
-    def set_plot_directory(self, plot_directory):
-        self.plot_directory = plot_directory
-        self.plot_options.SetOutputDirectory(plot_directory)
-
-    def set_layer_color_by_id(self, layer_id, colors):
-        layer = self.get_layer_by_id(layer_id)
-        for idx, item in enumerate(PPcbLayerColorType):
-            layer.SetColor(idx, colors[idx])
-
-    def set_layer_color_by_name(self, layer_name, colors):
-        _, layer = self.get_layer_by_name(layer_name)
-        for idx, item in enumerate(PPcbLayerColorType):
-            layer.SetColor(idx, colors[idx])
-
-    def _get_layer_color(self, layer):
-        if not layer.type == ppcbLayerRouting and not layer.type == ppcbLayerComponent:
-            pass
-        color_name = []
-        for idx, item in enumerate(PPcbLayerColorType):
-            color_seq = layer.GetColor(idx)
-            color = PPcbDefaultPaletteColorList.get_value_by_idx(color_seq)
-            color_name.append(color.get_color_name())
-        print(f"{'Layers':25} {'Trace':10} {'Via':10} {'Pad':10} {'Copper':10} {'Line':10} {'Text':10} {'Error':10}")
-        print(f"{layer.Name:25} {color_name[0]:10} {color_name[1]:10} {color_name[2]:10} {color_name[3]:10} {color_name[4]:10} {color_name[5]:10} {color_name[6]:10}")
-
-    def get_layer_color_by_id(self, layer_id):
-        layer = self.get_layer_by_id(layer_id)
-        self._get_layer_color(layer)
-
-    def get_layer_color_by_name(self, layer_name):
-        _, layer = self.get_layer_by_name(layer_name)
-        self._get_layer_color(layer)
-
-    def get_layer_by_id(self, layer_id):
-        for idx, _layer in enumerate(self.layers):
+    def get_sheet_by_id(self, layer_id):
+        for idx, _layer in enumerate(self.sheets):
             if idx + 1 == layer_id:
                 layer = IPowerPCBLayer(_layer)
                 return layer
         return None
 
-    def get_layer_by_name(self, layer_name):
+    def get_sheet_by_name(self, layer_name):
         for idx, _layer in enumerate(self.layers):
             if _layer.Name == layer_name:
                 layer = IPowerPCBLayer(_layer)
                 return (idx + 1, layer)
         return (None, None)
-
-    def get_layer_name(self, layer_id):
-        return self.get_layer_by_id(layer_id).Name
-
-    def get_layer_id(self, layer_name):
-        index, _ = self.get_layer_by_name(layer_name)
-        return index
 
     def export_ascii(self, file):
         ver = plogASCIIVerCurrent

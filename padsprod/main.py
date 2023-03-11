@@ -77,7 +77,7 @@ def main():
         "-i", "--input",
         dest='input',
         help="Open file path",
-        default="test.pcb",
+        default=None,
     )
     parent.add_argument(
         "-o", "--output",
