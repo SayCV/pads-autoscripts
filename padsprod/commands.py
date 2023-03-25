@@ -112,3 +112,39 @@ def run_export(args):
         logger.status(f"Export to {out_format} done.")
     else:
         logger.info(f"Export Command Unimplemented! <- {in_format}")
+
+def run_renamerefs(args):
+    if args.input is None:
+        logger.error("Please provide input file!")
+        sys.exit(1)
+    input = path(args.input).absolute()
+    file_name = input.stem
+    if not input.exists():
+        logger.error("Input file non exist")
+        sys.exit(1)
+
+    in_format = args.in_format
+    if in_format is None:
+        in_format = input.suffix.lstrip('.')
+    if in_format is None:
+        logger.error("Input format not found")
+        sys.exit(1)
+
+    out_format = args.out_format
+    if out_format is None:
+        logger.error("Output format not found")
+        sys.exit(1)
+
+    output = args.output
+    if output is None:
+        output = path.joinpath(input.parent, file_name + '.' + out_format)
+
+    if in_format == 'sch':
+        logger.info(f"TODO! <- {in_format}")
+        logger.status(f"Renamerefs map saved in {output.with_suffix('.map.txt')}.")
+        logger.status(f"Renamerefs {out_format} done.")
+    elif in_format == 'pcb':
+        logger.status(f"Renamerefs map saved in {output.with_suffix('.map.txt')}.")
+        logger.status(f"Renamerefs {out_format} done.")
+    else:
+        logger.info(f"Renamerefs Command Unimplemented! <- {in_format}")

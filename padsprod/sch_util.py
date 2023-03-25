@@ -137,15 +137,15 @@ class SCH(object):
     def get_sheet_by_id(self, layer_id):
         for idx, _layer in enumerate(self.sheets):
             if idx + 1 == layer_id:
-                layer = IPowerPCBLayer(_layer)
-                return layer
+                sheet = IPowerLogicSheet(_layer)
+                return sheet
         return None
 
-    def get_sheet_by_name(self, layer_name):
-        for idx, _layer in enumerate(self.layers):
-            if _layer.Name == layer_name:
-                layer = IPowerPCBLayer(_layer)
-                return (idx + 1, layer)
+    def get_sheet_by_name(self, sheet_name):
+        for idx, _sheet in enumerate(self.sheets):
+            if _sheet.Name == sheet_name:
+                sheet = IPowerLogicSheet(_sheet)
+                return (idx + 1, sheet)
         return (None, None)
 
     def export_ascii(self, file):

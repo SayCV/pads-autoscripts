@@ -39,6 +39,11 @@ def command_export(args):
     logger.debug("called args: " + str(args))
     commands.run_export(args)
 
+def command_renamerefs(args):
+    print("padsprod version: {}".format(__version__))
+    logger.debug("called args: " + str(args))
+    commands.run_renamerefs(args)
+
 def command_info(args):
     print("padsprod version: {}".format(__version__))
     commands.run_info(args)
@@ -164,6 +169,13 @@ def main():
         help="Export from the provided sch and pcb file",
     )
     export.set_defaults(func=command_export)
+
+    renamerefs = subparser.add_parser(
+        "renamerefs",
+        parents=[parent, parent_sch, parent_pcb, parent_format],
+        help="Rename references of the provided sch and pcb file",
+    )
+    renamerefs.set_defaults(func=command_renamerefs)
 
     info = subparser.add_parser(
         "info",
