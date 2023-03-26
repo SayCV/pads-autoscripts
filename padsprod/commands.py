@@ -143,7 +143,7 @@ def run_renamerefs(args):
         sch.run_renamerefs()
         save = True
         if output:
-            sch.save_as(output)
+            sch.save_as(path(output).absolute())
             save = False
         sch.close(save=save)
         logger.status(f"Renamerefs {out_format} done.")
