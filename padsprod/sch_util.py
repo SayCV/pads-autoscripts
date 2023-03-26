@@ -321,17 +321,17 @@ class SCH(object):
         return components
 
     def resorted_components_ref_by_sheet(self, sheet: IPowerLogicSheet, components: List, sort_type = plogAnnotationTypeLeftRight):
-        def my_sorted_left_right(a, b): # y 逆序 -> x 顺序
-            if a["py"] < b["py"]:
-                return  1 # b, a
-            if a["px"] < b["px"]:
+        def my_sorted_left_right(a, b):
+            if a["px"] - b["px"] > 1:
+                return 1 # b, a
+            elif a["px"] - b["px"] < 1:
                 return -1 # a, b
             return 0  # a = b
-        def my_sorted_top_bottom(a, b): # x 顺序 -> y 逆序
-            if a["px"] < b["px"]:
-                return -1 # a, b
-            if a["py"] < b["py"]:
+        def my_sorted_top_bottom(a, b):
+            if a["py"] - b["py"] < 1:
                 return 1 # b, a
+            elif a["py"] - b["py"] > 1:
+                return -1 # a, b
             return 0  # a = b
         def custom_sorted(a, b):
             if sort_type == plogAnnotationTypeLeftRight:
@@ -339,8 +339,22 @@ class SCH(object):
             return my_sorted_top_bottom(a, b)
         
         sht_idx, _ = self.get_sheet_by_name(sheet.Name)
-        _sorted_comps = sorted(components, key=functools.cmp_to_key(custom_sorted))
-        for idx, comp in enumerate(_sorted_comps):
+        _sorted_comps = sorted(components, key=functools.cmp_to_key(my_sorted_left_right))
+        _sorted_comps = sorted(components, key=functools.cmp_to_key(my_sorted_top_bottom))
+
+        if False:
+            old_ref_point_values = []
+            new_ref_point_values = []
+            for _comp in components:
+                old_ref_point_values.append(f'{_comp["old_ref"]:6s} {_comp["px"]:10.2f} {_comp["py"]:10.2f}')
+            for _comp in _sorted_comps:
+                new_ref_point_values.append(f'{_comp["old_ref"]:6s} {_comp["px"]:10.2f} {_comp["py"]:10.2f}')
+            point_file = path(self.board_file).with_suffix(f'.sch{sht_idx}-old-point.txt')
+            point_file.write_text('\n'.join(old_ref_point_values), encoding='utf-8')
+            point_file = path(self.board_file).with_suffix(f'.sch{sht_idx}-new-point.txt')
+            point_file.write_text('\n'.join(new_ref_point_values), encoding='utf-8')
+
+        for _, comp in enumerate(_sorted_comps):
             plogComp = IPowerLogicComp(comp["obj"])
             new_ref = comp["old_ref_list"][0] + str(self.components_class[comp["class"]]['current'])
 
@@ -376,9 +390,17 @@ class SCH(object):
         logger.info(f'Total components: {sum(len(idx) for idx in comp)}, Total components class: {len(self.components_class)}')
 
         rename_ref_map_values = []
+        ref_point_values = []
         for sht in comp:
             for _comp in sht:
                 rename_ref_map_values.append(f"{_comp['old_ref']} -> {_comp['new_ref']}")
-        map_file = path(self.board_file).with_suffix('.sch-refs-map.txt')
+                ref_point_values.append(f'{_comp["old_ref"]:6s} {_comp["new_ref"]:6s} {_comp["px"]:10.2f} {_comp["py"]:10.2f}')
+            rename_ref_map_values.append("")
+            ref_point_values.append("")
+        map_file = path(self.board_file).with_suffix('.sch-renamed-map.txt')
         map_file.write_text('\n'.join(rename_ref_map_values), encoding='utf-8')
-        logger.info(f'The rename map file saved as {map_file}.')
+        logger.info(f'The part map file saved as {map_file}.')
+        if False:
+            point_file = path(self.board_file).with_suffix('.sch-renamed-point.txt')
+            point_file.write_text('\n'.join(ref_point_values), encoding='utf-8')
+            logger.info(f'The part point file saved as {point_file}.')

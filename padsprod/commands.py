@@ -72,7 +72,7 @@ def run_export(args):
         output = path.joinpath(input.parent, file_name + '.' + out_format)
 
     if in_format == 'sch':
-        logger.info(f"TODO! <- {in_format}")
+        logger.info(f"Running...")
         if out_format == 'pdf':
             sch_file = input
             visible = True
@@ -135,7 +135,7 @@ def run_renamerefs(args):
     output = args.output
 
     if in_format == 'sch':
-        logger.info(f"TODO! <- {in_format}")
+        logger.info(f"Running...")
 
         sch_file = input
         visible = False

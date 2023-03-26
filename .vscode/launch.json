@@ -23,7 +23,12 @@
             "request": "launch",
             "program": "test.py",
             "console": "integratedTerminal",
-            "args": ["renamerefs", "--input=data/demo1.sch", "--debug"]
+            "args": [
+                "renamerefs", 
+                "--input=data/demo1.sch", 
+                "--output=data/demo1.rename.sch", 
+                "--debug",
+            ]
         },
         {
             "name": "Python: Remote Attach",
