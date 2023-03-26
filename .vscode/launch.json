@@ -10,6 +10,22 @@
             "args": ["export", "--to=pdf", "--debug"]
         },
         {
+            "name": "Test SCH Export PDF",
+            "type": "python",
+            "request": "launch",
+            "program": "test.py",
+            "console": "integratedTerminal",
+            "args": ["export", "--to=pdf", "--debug"]
+        },
+        {
+            "name": "Test SCH Rename Refs",
+            "type": "python",
+            "request": "launch",
+            "program": "test.py",
+            "console": "integratedTerminal",
+            "args": ["renamerefs", "--input=data/demo1.sch", "--debug"]
+        },
+        {
             "name": "Python: Remote Attach",
             "type": "python",
             "request": "attach",

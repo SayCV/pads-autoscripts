@@ -130,21 +130,24 @@ def run_renamerefs(args):
         logger.error("Input format not found")
         sys.exit(1)
 
-    out_format = args.out_format
-    if out_format is None:
-        logger.error("Output format not found")
-        sys.exit(1)
+    out_format = args.out_format if args.out_format else in_format
 
     output = args.output
-    if output is None:
-        output = path.joinpath(input.parent, file_name + '.' + out_format)
 
     if in_format == 'sch':
         logger.info(f"TODO! <- {in_format}")
-        logger.status(f"Renamerefs map saved in {output.with_suffix('.map.txt')}.")
+
+        sch_file = input
+        visible = False
+        sch = sch_util.SCH(sch_file, visible)
+        sch.run_renamerefs()
+        save = True
+        if output:
+            sch.save_as(output)
+            save = False
+        sch.close(save=save)
         logger.status(f"Renamerefs {out_format} done.")
     elif in_format == 'pcb':
-        logger.status(f"Renamerefs map saved in {output.with_suffix('.map.txt')}.")
         logger.status(f"Renamerefs {out_format} done.")
     else:
         logger.info(f"Renamerefs Command Unimplemented! <- {in_format}")
