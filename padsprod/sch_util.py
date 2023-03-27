@@ -143,12 +143,13 @@ mcrPLogCmdList = {
 
 
 class SCH(object):
-    def __init__(self, board_file, visible):
+    def __init__(self, args, board_file, visible):
         macro_dir = path.joinpath(PADSPROD_ROOT, 'macros')
         if not path.exists(macro_dir):
             path.mkdir(macro_dir)
 
         logger.status(f'Opening: {board_file}')
+        self.args = args
         self.board_file = board_file
         self.name = os.path.splitext(os.path.basename(board_file))[0]
         self.mputils = mputils()
@@ -200,7 +201,7 @@ class SCH(object):
         file = path.joinpath(dirname, 'macros', macro_file)
         self.app.RunMacro(file, 'Macro1')
 
-    def run_macro_ppcb_reset_default_palette(self):
+    def run_macro_plog_reset_default_palette(self):
         dirname = PADSPROD_ROOT
         origin = mcrPLogCmdList['PLogResetDefaultPaletteMacro']
         macro_file = path.joinpath(dirname, 'macros', origin)
@@ -226,16 +227,16 @@ class SCH(object):
         d = {
             "pdf_file": pdf,
             "enable_open_pdf": 'false',
-            "enable_hyperlinks_attr": 'false',
-            "enable_hyperlinks_nets": 'false',
-            "color_scheme_setting": PLogPdfColorSchemeSetting.plogPdfBlackOnWhiteBackground,
+            "enable_hyperlinks_attr": self.args.enable_hyperlinks_attr,
+            "enable_hyperlinks_nets": self.args.enable_hyperlinks_nets,
+            "color_scheme_setting": self.args.pdf_color_scheme,
         }
         macro_content = t.substitute(d)
         path.write_text(macro_file, macro_content)
 
         return macro_file
 
-    def run_macro_ppcb_export_pdf(self, pdf, page):
+    def run_macro_plog_export_pdf(self, pdf, page):
         color_idxs = []
         for _, item in enumerate(PLogObjColorType):
             color_idx = PLogDefaultPaletteColorList.get_idx('silver')
@@ -247,7 +248,7 @@ class SCH(object):
 
         logger.status(f'Export to pdf from {page} sheet.')
         #self.set_obj_color_by_name(page, color_idxs)
-        macro_file = self._config_macro_ppcb_export_pdf(pdf, page)
+        macro_file = self._config_macro_plog_export_pdf(pdf, page)
         self.run_macro(macro_file)
 
     def save_as(self, file):

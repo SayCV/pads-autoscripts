@@ -75,18 +75,17 @@ def run_export(args):
         logger.info(f"Running...")
         if out_format == 'pdf':
             sch_file = input
-            visible = True
-            sch = sch_util.SCH(sch_file, visible)
-            #sch.run_macro_ppcb_reset_default_palette()
-            #sch.run_macro_ppcb_export_pdf(output, 'Top')
-            #sch.run_macro_ppcb_export_pdf(output, 'Bottom')
-            sch.close(False)
+            visible = False
+            sch = sch_util.SCH(args, sch_file, visible)
+            sch.run_macro_plog_reset_default_palette()
+            sch.run_macro_plog_export_pdf(output, args.page)
+            sch.close()
         elif out_format == 'txt':
             sch_file = input
-            visible = True
-            sch = sch_util.SCH(sch_file, visible)
+            visible = False
+            sch = sch_util.SCH(args, sch_file, visible)
             sch.export_ascii(output)
-            #sch.close()
+            sch.close()
         else:
             logger.error("Output format not support")
             sys.exit(1)
