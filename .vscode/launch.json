@@ -7,7 +7,11 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["export", "--to=pdf", "--debug"]
+            "args": [
+                "export", 
+                "--to=pdf", 
+                "--debug",
+            ]
         },
         {
             "name": "Test SCH Export PDF",
@@ -15,7 +19,11 @@
             "request": "launch",
             "program": "test.py",
             "console": "integratedTerminal",
-            "args": ["export", "--to=pdf", "--debug"]
+            "args": [
+                "export", 
+                "--to=pdf", 
+                "--debug",
+            ]
         },
         {
             "name": "Test SCH Rename Refs",
@@ -27,6 +35,18 @@
                 "renamerefs", 
                 "--input=data/demo1.sch", 
                 "--output=data/demo1.rename.sch", 
+                "--debug",
+            ]
+        },
+        {
+            "name": "Test PCB Info",
+            "type": "python",
+            "request": "launch",
+            "program": "test.py",
+            "console": "integratedTerminal",
+            "args": [
+                "info", 
+                "--input=data/demo1.pcb", 
                 "--debug",
             ]
         },

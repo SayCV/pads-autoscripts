@@ -14,7 +14,23 @@ from .color_constants import colors
 
 logger = logging.getLogger(__name__)
 
-strPPcbUnit = ['Current', 'Database', 'Mils', 'Inch', 'Metric']
+strPPcbUnit = {
+    'Current': 0,
+    'Database': 1,
+    'Mils': 2,
+    'Inch': 3,
+    'Metric': 4,
+}
+
+strPPcbDrawingType = {
+    'Drw2Dline': 0,
+    'DrwBoard': 1,
+    'DrwCopper': 3,
+    'DrwCopperPour': 6,
+    'DrwCopperHatch': 7,
+    'DrwCopperThermal': 8,
+    'DrwKeepout': 9,
+}
 
 layerPcbItem = [
     'Trace',      'Via',           'Pad',    'Copper',   'Line',      'Text',    'Error',
@@ -121,25 +137,31 @@ class PCB(object):
             pass
 
     def info(self):
-        logger.info(f'PCB Layers: {self.board.ElectricalLayerCount}')
+        logger.info(f'This PCB file includes Components: {self.board.Components.Count}, Layers: {self.board.ElectricalLayerCount}')
+        print('Board Stackup:')
 
         metal_layers_count = 0
         diele_layers_count = 0
         pcb_thick = 0
-        for _layer in self.layers:
+        for idx, _layer in enumerate(self.layers):
             layer = IPowerPCBLayer(_layer)
-            logger.info(f'Layer Name: {layer.Name}')
+            print(f' -> L{idx+1:02d}: {layer.Name}')
             if layer.type == ppcbLayerRouting or layer.type == ppcbLayerComponent:
                 metal_layers_count += 1
                 pcb_thick += layer.CopperThickness
             else:
                 diele_layers_count += 1
             pcb_thick += layer.GetDielectricThickness(ppcbDielectricLayerAbove)
-        print('Stackup:')
         print(
-            f'Number of layers = {self.layers.Count}, including {metal_layers_count} metal, {diele_layers_count} dielectric')
-        print('Thickness = {0:.2f}{1}'.format(
-            pcb_thick * 1, strPPcbUnit[self.board.unit]))
+            f'Board layers: Total {self.layers.Count}, includes {metal_layers_count} metal, {diele_layers_count} dielectric')
+        _key = list(strPPcbUnit.keys())[list(strPPcbUnit.values()).index(self.board.unit)]
+        print(f'Board Thickness = {pcb_thick:.2f}{_key}')
+        print(f'Board Origin Point: px={self.board.OriginX}, py={self.board.OriginY}')
+        old_unit = self.board.unit
+        self.board.unit = strPPcbUnit['Metric']
+        dBoardSize = self.board.BoardOutlineSurface
+        print(f"Board Size: {dBoardSize: .2f} mm²")
+        self.board.unit = old_unit
 
     def set_visible(self, visible):
         self.app.Visible = visible

@@ -33,13 +33,13 @@ def run_info(args):
     if in_format == 'sch':
         board_file = input
         set_visible = False
-        sch = sch_util.SCH(board_file, set_visible)
+        sch = sch_util.SCH(args, board_file, set_visible)
         sch.info()
         sch.close()
     elif in_format == 'pcb':
         board_file = input
         set_visible = False
-        pcb = pcb_util.PCB(board_file, set_visible)
+        pcb = pcb_util.PCB(args, board_file, set_visible)
         pcb.info()
         pcb.close()
     else:
@@ -140,7 +140,6 @@ def run_renamerefs(args):
         visible = False
         sch = sch_util.SCH(args, sch_file, visible)
         sch.run_renamerefs()
-        save = True
         if output is None:
             output = input.with_suffix('.refs-renamed.sch')
         sch.save_as(path(output).absolute())
