@@ -199,9 +199,9 @@ class PCB(object):
         return index
 
     def export_ascii(self, file):
-        sections = ppcbASCIISectionAll
+        sections = -1 if ppcbASCIISectionAll > 0xffff else ppcbASCIISectionAll
         ver = ppcbASCIIVerCurrent
-        expandAttrs = ppcbAttrAll
+        expandAttrs = -1 if ppcbAttrAll > 0xffff else ppcbAttrAll
         self.board.ExportASCII(file, sections, ver, expandAttrs)
 
     def run_macro(self, macro_file):
