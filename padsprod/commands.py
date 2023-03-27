@@ -94,7 +94,7 @@ def run_export(args):
         if out_format == 'pdf':
             board_file = input
             visible = False
-            pcb = pcb_util.PCB(board_file, visible)
+            pcb = pcb_util.PCB(args, board_file, visible)
             pcb.run_macro_ppcb_reset_default_palette()
             pcb.run_macro_ppcb_export_pdf(output, 'Top')
             pcb.run_macro_ppcb_export_pdf(output, 'Bottom')
@@ -102,7 +102,7 @@ def run_export(args):
         elif out_format == 'asc':
             board_file = input
             visible = False
-            pcb = pcb_util.PCB(board_file, visible)
+            pcb = pcb_util.PCB(args, board_file, visible)
             pcb.export_ascii(output)
             pcb.close()
         else:
@@ -138,13 +138,13 @@ def run_renamerefs(args):
 
         sch_file = input
         visible = False
-        sch = sch_util.SCH(sch_file, visible)
+        sch = sch_util.SCH(args, sch_file, visible)
         sch.run_renamerefs()
         save = True
-        if output:
-            sch.save_as(path(output).absolute())
-            save = False
-        sch.close(save=save)
+        if output is None:
+            output = input.with_suffix('.refs-renamed.sch')
+        sch.save_as(path(output).absolute())
+        sch.close(False)
         logger.status(f"Renamerefs {out_format} done.")
     elif in_format == 'pcb':
         logger.status(f"Renamerefs {out_format} done.")

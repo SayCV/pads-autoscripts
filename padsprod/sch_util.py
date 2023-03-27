@@ -398,10 +398,10 @@ class SCH(object):
                 ref_point_values.append(f'{_comp["old_ref"]:6s} {_comp["new_ref"]:6s} {_comp["px"]:10.2f} {_comp["py"]:10.2f}')
             rename_ref_map_values.append("")
             ref_point_values.append("")
-        map_file = path(self.board_file).with_suffix('.sch-renamed-map.txt')
+        map_file = path(self.board_file).with_suffix('.sch-refs-renamed-map.txt')
         map_file.write_text('\n'.join(rename_ref_map_values), encoding='utf-8')
         logger.info(f'The part map file saved as {map_file}.')
         if False:
-            point_file = path(self.board_file).with_suffix('.sch-renamed-point.txt')
+            point_file = path(self.board_file).with_suffix('.sch-refs-renamed-point.txt')
             point_file.write_text('\n'.join(ref_point_values), encoding='utf-8')
             logger.info(f'The part point file saved as {point_file}.')

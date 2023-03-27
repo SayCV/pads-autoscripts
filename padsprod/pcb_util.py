@@ -97,12 +97,13 @@ class Layer(object):
 
 
 class PCB(object):
-    def __init__(self, board_file, visible):
+    def __init__(self, args, board_file, visible):
         macro_dir = path.joinpath(PADSPROD_ROOT, 'macros')
         if not path.exists(macro_dir):
             path.mkdir(macro_dir)
         
         logger.status(f'Opening: {board_file}')
+        self.args = args
         self.name = os.path.splitext(os.path.basename(board_file))[0]
         self.mputils = mputils()
         self.app = self.mputils.PADSPCBApplication()
