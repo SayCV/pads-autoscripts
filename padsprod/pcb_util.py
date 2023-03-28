@@ -155,7 +155,7 @@ class PCB(object):
         print(
             f'Board layers: Total {self.layers.Count}, includes {metal_layers_count} metal, {diele_layers_count} dielectric')
         _key = list(strPPcbUnit.keys())[list(strPPcbUnit.values()).index(self.board.unit)]
-        print(f'Board Thickness = {pcb_thick:.2f}{_key}')
+        print(f'Board Thickness: {pcb_thick:.2f} {_key}')
         print(f'Board Origin Point: px={self.board.OriginX}, py={self.board.OriginY}')
         old_unit = self.board.unit
         self.board.unit = strPPcbUnit['Metric']
