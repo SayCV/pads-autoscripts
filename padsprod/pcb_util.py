@@ -271,7 +271,7 @@ class PCB(object):
             pdf = path.joinpath(pdf.parent, pdf.stem + '-drill-drawing.pdf')
             pdc_name = PPCB_EXPORT_PDF_DRAWING_PDC
         else:
-            pdf = path.joinpath(pdf.parent, pdf.stem + f'-mid{layer_number}.pdf')
+            pdf = path.joinpath(pdf.parent, pdf.stem + f'-L{layer_number:02}.pdf')
             pdc_name = PPCB_EXPORT_PDF_MID_LAYER_PDC
         
         #if layer_name.isnumeric():
