@@ -256,7 +256,7 @@ class SCH(object):
 
     def close(self, save=True):
         if save:
-            self.board.SaveAsTemp('default.sch')
+            self.board.SaveTemp()
         self.app.Quit()
 
     def get_components_by_sheet(self, sheet: IPowerLogicSheet):

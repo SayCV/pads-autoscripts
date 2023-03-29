@@ -292,5 +292,5 @@ class PCB(object):
 
     def close(self, save=True):
         if save:
-            self.board.SaveAsTemp('default.pcb')
+            self.board.SaveTemp()
         self.app.Quit()
