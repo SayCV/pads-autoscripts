@@ -77,6 +77,11 @@ def run_export(args):
             sch_file = input
             visible = False
             sch = sch_util.SCH(args, sch_file, visible)
+            if args.page > sch.get_total_sheet_count():
+                logger.error(f"Provided sheet number({args.page}) over than the sch real sheet count({sch.get_total_sheet_count()})!")
+                sch.close()
+                return
+
             sch.run_macro_plog_reset_default_palette()
             sch.run_macro_plog_export_pdf(output, args.page)
             sch.close()
@@ -99,7 +104,7 @@ def run_export(args):
                 logger.error(f"Provided layer number({args.layer}) over than the pcb real layer count({pcb.get_total_layer_count()})!")
                 pcb.close()
                 return
-            
+
             pcb.run_macro_ppcb_reset_default_palette()
             #pcb.run_macro_ppcb_export_pdf(output, 'Top')
             #pcb.run_macro_ppcb_export_pdf(output, 'Bottom')

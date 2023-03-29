@@ -170,7 +170,7 @@ class SCH(object):
             pass
 
     def info(self):
-        logger.info(f'This SCH file includes Components: {self.board.Components.Count}, Sheets: {self.board.Sheets.Count}')
+        logger.info(f'This SCH file includes Components: {self.board.Components.Count}, Sheets: {self.sheets.Count}')
         for sht_idx, _sheet in enumerate(self.sheets):
             sheet = IPowerLogicSheet(_sheet)
             logger.info(f'Page{sht_idx+1}: {sheet.Name}')
@@ -178,12 +178,18 @@ class SCH(object):
     def set_visible(self, visible):
         self.app.Visible = visible
 
+    def get_total_sheet_count(self):
+        return self.sheets.Count
+
     def get_sheet_by_id(self, sheet_id):
         for idx, _sheet in enumerate(self.sheets):
             if idx + 1 == sheet_id:
                 sheet = IPowerLogicSheet(_sheet)
                 return sheet
         return None
+
+    def get_sheet_name(self, sheet_id):
+        return self.get_sheet_by_id(sheet_id).Name
 
     def get_sheet_by_name(self, sheet_name):
         for idx, _sheet in enumerate(self.sheets):
@@ -218,18 +224,23 @@ class SCH(object):
         origin = mcrPLogCmdList['PLogExportPdfMacro']
         macro_file = path.joinpath(dirname, 'macros', origin)
 
+        _MACRO_OPS = MACRO_OPS_2
+        page_idx = page - 1
         if page == 0:
             pdf = path.joinpath(pdf.parent, pdf.stem + '-sch.pdf')
+            page_idx = 0
         else:
-            pdf = path.joinpath(pdf.parent, pdf.stem + f'-sch{page}.pdf')
+            pdf = path.joinpath(pdf.parent, pdf.stem + f'-sch{page:02}.pdf')
+            _MACRO_OPS = MACRO_OPS_3
 
-        t = Template(MACRO_OPS_2)
+        t = Template(_MACRO_OPS)
         d = {
             "pdf_file": pdf,
             "enable_open_pdf": 'false',
             "enable_hyperlinks_attr": self.args.enable_hyperlinks_attr,
             "enable_hyperlinks_nets": self.args.enable_hyperlinks_nets,
             "color_scheme_setting": self.args.pdf_color_scheme,
+            "page_idx": page_idx,
         }
         macro_content = t.substitute(d)
         path.write_text(macro_file, macro_content)
@@ -237,6 +248,11 @@ class SCH(object):
         return macro_file
 
     def run_macro_plog_export_pdf(self, pdf, page):
+        if page == 0:
+            sheet_name = 'all'
+        else:
+            sheet_name = self.get_sheet_name(page)
+
         color_idxs = []
         for _, item in enumerate(PLogObjColorType):
             color_idx = PLogDefaultPaletteColorList.get_idx('silver')
@@ -246,7 +262,7 @@ class SCH(object):
             #    color_idx = PLogDefaultPaletteColorList.get_idx('white')
             color_idxs.append(color_idx)
 
-        logger.status(f'Export to pdf from {page} sheet.')
+        logger.status(f'Export to pdf from {sheet_name} sheet.')
         #self.set_obj_color_by_name(page, color_idxs)
         macro_file = self._config_macro_plog_export_pdf(pdf, page)
         self.run_macro(macro_file)

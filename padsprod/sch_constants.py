@@ -14,3 +14,15 @@ DlgPDFOut.HyperlinksNets = ${enable_hyperlinks_nets}
 DlgPDFOut.ColorSchemeSetting = ${color_scheme_setting}
 DlgPDFOut.Ok.Click()
 """
+
+MACRO_OPS_3 = r"""
+Application.CreatePDF("${pdf_file}")
+DlgPDFOut.StartAcrobat = ${enable_open_pdf}
+DlgPDFOut.HyperlinksAttr = ${enable_hyperlinks_attr}
+DlgPDFOut.HyperlinksNets = ${enable_hyperlinks_nets}
+DlgPDFOut.ColorSchemeSetting = ${color_scheme_setting}
+DlgPDFOut.RemoveAll.Click()
+DlgPDFOut.AvailableList.Selected(${page_idx}) = true
+DlgPDFOut.Add.Click()
+DlgPDFOut.Ok.Click()
+"""
