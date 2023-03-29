@@ -128,7 +128,7 @@ def main():
     parent_pcb = argparse.ArgumentParser(add_help=False)
     parent_pcb.add_argument(
         "--layer",
-        default=1,
+        default=0,
         type=int,
         help="The pcb layer.",
     )

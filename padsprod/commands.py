@@ -96,8 +96,15 @@ def run_export(args):
             visible = False
             pcb = pcb_util.PCB(args, board_file, visible)
             pcb.run_macro_ppcb_reset_default_palette()
-            pcb.run_macro_ppcb_export_pdf(output, 'Top')
-            pcb.run_macro_ppcb_export_pdf(output, 'Bottom')
+            #pcb.run_macro_ppcb_export_pdf(output, 'Top')
+            #pcb.run_macro_ppcb_export_pdf(output, 'Bottom')
+            if args.layer == 0:
+                for idx in range(1, pcb.get_electrical_layer_count() + 1):
+                    pcb.run_macro_ppcb_export_pdf(output, idx)
+                drawing_layer_id = pcb.get_layer_id('Drill Drawing')
+                pcb.run_macro_ppcb_export_pdf(output, drawing_layer_id)
+            else:
+                pcb.run_macro_ppcb_export_pdf(output, args.layer)
             pcb.close()
         elif out_format == 'asc':
             board_file = input

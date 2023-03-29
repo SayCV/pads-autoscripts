@@ -170,11 +170,13 @@ class PCB(object):
         self.plot_directory = plot_directory
         self.plot_options.SetOutputDirectory(plot_directory)
 
+    def get_electrical_layer_count(self):
+        return self.board.ElectricalLayerCount
+
     def set_layer_color_by_id(self, layer_id, colors):
         layer = self.get_layer_by_id(layer_id)
         for idx, item in enumerate(PPcbLayerColorType):
             layer.SetColor(idx, colors[idx])
-
 
     def set_layer_color_by_name(self, layer_name, colors):
         _, layer = self.get_layer_by_name(layer_name)
@@ -244,17 +246,35 @@ class PCB(object):
 
         self.run_macro(macro_file)
 
-    def _config_macro_ppcb_export_pdf(self, pdf, layer_name):
+    def _config_macro_ppcb_export_pdf(self, pdf, layer_number):
         dirname = PADSPROD_ROOT
         origin = mcrPPcbCmdList['PPcbExportPdfMacro']
         macro_file = path.joinpath(dirname, 'macros', origin)
 
+        silk_layer_number = ''
+        assembly_layer_number = ''
+        layer_name = self.get_layer_name(layer_number)
         if layer_name == 'Top':
             pdf = path.joinpath(pdf.parent, pdf.stem + '-top-silk.pdf')
             pdc_name = PPCB_EXPORT_PDF_TOP_SILK_PDC
+            silk_layer_number = self.get_layer_id('Silkscreen Top')
+            assembly_layer_number = self.get_layer_id('Assembly Drawing Top')
         elif layer_name == 'Bottom':
             pdf = path.joinpath(pdf.parent, pdf.stem + '-bot-silk.pdf')
             pdc_name = PPCB_EXPORT_PDF_BOT_SILK_PDC
+            silk_layer_number = self.get_layer_id('Silkscreen Bottom')
+            assembly_layer_number = self.get_layer_id('Assembly Drawing Bottom')
+        elif layer_name == 'Drill Drawing':
+            pdf = path.joinpath(pdf.parent, pdf.stem + '-drill-drawing.pdf')
+            pdc_name = PPCB_EXPORT_PDF_DRAWING_PDC
+        else:
+            pdf = path.joinpath(pdf.parent, pdf.stem + f'-mid{layer_number}.pdf')
+            pdc_name = PPCB_EXPORT_PDF_MID_LAYER_PDC
+        
+        #if layer_name.isnumeric():
+        #    layer_number = int(layer_name)
+        #else:
+        #    layer_number = self.get_layer_id(layer_name)
 
         t = Template(MACRO_OPS_2)
         d = {
@@ -269,13 +289,16 @@ class PCB(object):
         pdc_tpl = path.joinpath(dirname, 'config', pdc_name + '.tpl')
         t = Template(path.read_text(pdc_tpl))
         d = { 
-            "layer": self.get_layer_id(layer_name),
+            "layer": layer_number,
+            "silk_layer": silk_layer_number,
+            "assembly_layer": assembly_layer_number,
         }
         pdc_content = t.substitute(d)
         path.write_text(pdc_file, pdc_content)
         return macro_file
 
-    def run_macro_ppcb_export_pdf(self, pdf, layer_name):
+    def run_macro_ppcb_export_pdf(self, pdf, layer_number):
+        layer_name = self.get_layer_name(layer_number)
         color_idxs = []
         for _, item in enumerate(PPcbLayerColorType):
             color_idx = PPcbDefaultPaletteColorList.get_idx('silver')
@@ -286,8 +309,8 @@ class PCB(object):
             color_idxs.append(color_idx)
 
         logger.status(f'Export to pdf from {layer_name} layer.')
-        self.set_layer_color_by_name(layer_name, color_idxs)
-        macro_file = self._config_macro_ppcb_export_pdf(pdf, layer_name)
+        self.set_layer_color_by_id(layer_number, color_idxs)
+        macro_file = self._config_macro_ppcb_export_pdf(pdf, layer_number)
         self.run_macro(macro_file)
 
     def close(self, save=True):

@@ -1,6 +1,8 @@
 
 PPCB_EXPORT_PDF_TOP_SILK_PDC = 'ppcb-export-pdf-top-silk-pdc'
 PPCB_EXPORT_PDF_BOT_SILK_PDC = 'ppcb-export-pdf-bot-silk-pdc'
+PPCB_EXPORT_PDF_MID_LAYER_PDC = 'ppcb-export-pdf-mid-layer-pdc'
+PPCB_EXPORT_PDF_DRAWING_PDC  = 'ppcb-export-pdf-drill-drawing-pdc'
 
 MACRO_OPS_1 = r"""
 Application.ExecuteCommand("Display Colors Setup")
