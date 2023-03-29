@@ -170,6 +170,9 @@ class PCB(object):
         self.plot_directory = plot_directory
         self.plot_options.SetOutputDirectory(plot_directory)
 
+    def get_total_layer_count(self):
+        return self.layers.Count
+
     def get_electrical_layer_count(self):
         return self.board.ElectricalLayerCount
 

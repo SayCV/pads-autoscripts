@@ -95,6 +95,11 @@ def run_export(args):
             board_file = input
             visible = False
             pcb = pcb_util.PCB(args, board_file, visible)
+            if args.layer > pcb.get_total_layer_count():
+                logger.error(f"Provided layer number({args.layer}) over than the pcb real layer count({pcb.get_total_layer_count()})!")
+                pcb.close()
+                return
+            
             pcb.run_macro_ppcb_reset_default_palette()
             #pcb.run_macro_ppcb_export_pdf(output, 'Top')
             #pcb.run_macro_ppcb_export_pdf(output, 'Bottom')
@@ -105,6 +110,7 @@ def run_export(args):
                 pcb.run_macro_ppcb_export_pdf(output, drawing_layer_id)
             else:
                 pcb.run_macro_ppcb_export_pdf(output, args.layer)
+
             pcb.close()
         elif out_format == 'asc':
             board_file = input
