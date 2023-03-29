@@ -230,7 +230,7 @@ class SCH(object):
             pdf = path.joinpath(pdf.parent, pdf.stem + '-sch.pdf')
             page_idx = 0
         else:
-            pdf = path.joinpath(pdf.parent, pdf.stem + f'-sch{page:02}.pdf')
+            pdf = path.joinpath(pdf.parent, pdf.stem + f'-sch-p{page:02}.pdf')
             _MACRO_OPS = MACRO_OPS_3
 
         t = Template(_MACRO_OPS)

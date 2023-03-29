@@ -103,7 +103,19 @@ def main():
         "--page",
         default=0,
         type=int,
-        help="The sch sheet page.",
+        help="The page of sch sheet.",
+    )
+    parent_sch.add_argument(
+        "--start-page",
+        default=None,
+        type=int,
+        help="The start page of sch sheet.",
+    )
+    parent_sch.add_argument(
+        "--end-page",
+        default=None,
+        type=int,
+        help="The end page of sch sheet.",
     )
     parent_sch.add_argument(
         "--enable-hyperlinks-attr",
