@@ -22,6 +22,7 @@
             "args": [
                 "export", 
                 "--to=pdf", 
+                "--input=data/demo1.sch", 
                 "--debug",
             ]
         },
@@ -47,6 +48,19 @@
             "args": [
                 "info", 
                 "--input=data/demo1.pcb", 
+                "--debug",
+            ]
+        },
+        {
+            "name": "Test PCB Export PDF",
+            "type": "python",
+            "request": "launch",
+            "program": "test.py",
+            "console": "integratedTerminal",
+            "args": [
+                "export", 
+                "--to=pdf",
+                "--input=data/demo1.pcb",  
                 "--debug",
             ]
         },
