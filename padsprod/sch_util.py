@@ -272,7 +272,7 @@ class SCH(object):
 
     def close(self, save=True):
         if save:
-            self.board.SaveTemp()
+            self.board.SaveAsTemp(path(self.app.DefaultFilePath) / 'default.sch')
         self.app.Quit()
 
     def get_components_by_sheet(self, sheet: IPowerLogicSheet):

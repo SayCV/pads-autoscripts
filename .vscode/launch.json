@@ -60,7 +60,8 @@
             "args": [
                 "export", 
                 "--to=pdf",
-                "--input=data/demo1.pcb",  
+                "--input=data/demo1.pcb",
+                "--layer=1",
                 "--debug",
             ]
         },

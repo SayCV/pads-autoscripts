@@ -318,5 +318,5 @@ class PCB(object):
 
     def close(self, save=True):
         if save:
-            self.board.SaveTemp()
+            self.board.SaveAsTemp(path(self.app.DefaultFilePath) / 'default.pcb')
         self.app.Quit()
