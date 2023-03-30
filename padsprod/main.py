@@ -196,7 +196,7 @@ def main():
 
     simu = subparser.add_parser(
         "simu",
-        parents=[parent, parent_sch, parent_pcb, parent_format],
+        parents=[parent, parent_pcb, parent_format],
         help="Simulate the board signal integrity.",
     )
     simu.set_defaults(func=command_simu)

@@ -13,7 +13,7 @@ from pathlib import Path as path
 import colorama
 import questionary
 
-from . import sch_util, pcb_util
+from . import sch_util, pcb_util, hyp_util
 
 logger = logging.getLogger(__name__)
 
@@ -215,17 +215,11 @@ def run_simu(args):
         logger.error("No input format found")
         sys.exit(1)
 
-    if in_format == 'sch':
+    if in_format == 'hyp':
         board_file = input
         set_visible = False
-        sch = sch_util.SCH(args, board_file, set_visible)
-        sch.info()
-        sch.close()
-    elif in_format == 'pcb':
-        board_file = input
-        set_visible = False
-        pcb = pcb_util.PCB(args, board_file, set_visible)
-        pcb.info()
-        pcb.close()
+        hyp = hyp_util.HYP(args, board_file, set_visible)
+        hyp.info()
+        hyp.close()
     else:
         logger.info(f"Simu Command Unimplemented! -- {in_format}")
