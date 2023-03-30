@@ -21,3 +21,19 @@ PDFConfig.Generate.ChooseFile("${pdf_file}")
 PDFConfig.Cancel.Click()
 DlgPrompt.Question("Do you want to save the changes ?").Answer(mbNo)
 """
+
+MACRO_OPS_3 = r"""
+Application.ExecuteCommand("Pour Manager")
+PourManagerDlg.Tabs = "Flood"
+PourManagerDlg.Ok.Click()
+DlgPrompt.Question("Proceed with flood?").Answer(mbYes)
+PourManagerDlg.Cancel.Click()
+"""
+
+MACRO_OPS_4 = r"""
+Application.ExportDocument("${hyp_file}")
+BoardSimDlg.Ok.Click()
+MissingHeightDlg.Height = "${missing_height}"
+MissingHeightDlg.ForAllParts = true
+MissingHeightDlg.Ok.Click()
+"""

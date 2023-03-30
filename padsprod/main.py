@@ -44,6 +44,11 @@ def command_renamerefs(args):
     logger.debug("called args: " + str(args))
     commands.run_renamerefs(args)
 
+def command_simu(args):
+    print("padsprod version: {}".format(__version__))
+    logger.debug("called args: " + str(args))
+    commands.run_simu(args)
+
 def command_info(args):
     print("padsprod version: {}".format(__version__))
     commands.run_info(args)
@@ -162,8 +167,8 @@ def main():
         "--to", "--write",
         dest='out_format',
         metavar='FORMAT',
-        help="sch|pcb|asc|txt|pdf",
-        choices=["sch", "pcb", "asc", "txt", "pdf"],
+        help="sch|pcb|asc|hyp|txt|pdf",
+        choices=["sch", "pcb", "asc", "hyp", "txt", "pdf"],
         default=None,
     )
 
@@ -188,6 +193,13 @@ def main():
         help="Rename references of the provided sch and pcb file",
     )
     renamerefs.set_defaults(func=command_renamerefs)
+
+    simu = subparser.add_parser(
+        "simu",
+        parents=[parent, parent_sch, parent_pcb, parent_format],
+        help="Simulate the board signal integrity.",
+    )
+    simu.set_defaults(func=command_simu)
 
     info = subparser.add_parser(
         "info",

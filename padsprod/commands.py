@@ -151,6 +151,12 @@ def run_export(args):
             pcb = pcb_util.PCB(args, board_file, visible)
             pcb.export_ascii(output)
             pcb.close()
+        elif out_format == 'hyp':
+            board_file = input
+            visible = False
+            pcb = pcb_util.PCB(args, board_file, visible)
+            pcb.export_hyp(output)
+            pcb.close()
         else:
             logger.error("Output format not support")
             sys.exit(1)
@@ -195,3 +201,31 @@ def run_renamerefs(args):
         logger.status(f"Renamerefs {out_format} done.")
     else:
         logger.info(f"Renamerefs Command Unimplemented! <- {in_format}")
+
+def run_simu(args):
+    if args.input is None:
+        logger.error("Please provide input file!")
+        sys.exit(1)
+    input = path(args.input).absolute()
+
+    in_format = args.in_format
+    if in_format is None:
+        in_format = input.suffix.lstrip('.')
+    if in_format is None:
+        logger.error("No input format found")
+        sys.exit(1)
+
+    if in_format == 'sch':
+        board_file = input
+        set_visible = False
+        sch = sch_util.SCH(args, board_file, set_visible)
+        sch.info()
+        sch.close()
+    elif in_format == 'pcb':
+        board_file = input
+        set_visible = False
+        pcb = pcb_util.PCB(args, board_file, set_visible)
+        pcb.info()
+        pcb.close()
+    else:
+        logger.info(f"Simu Command Unimplemented! -- {in_format}")

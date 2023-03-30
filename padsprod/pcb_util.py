@@ -93,6 +93,8 @@ class PPcbDefaultPaletteColorList(enum.Enum):
 mcrPPcbCmdList = {
     "PPcbResetDefaultPaletteMacro" : "Macro1.mcr",
     "PPcbExportPdfMacro" : "Macro2.mcr",
+    "PPcbPourMangerMacro" : "Macro3.mcr",
+    "PPcbExportHypMacro" : "Macro4.mcr",
 }
 
 
@@ -231,6 +233,43 @@ class PCB(object):
         ver = ppcbASCIIVerCurrent
         expandAttrs = -1 if ppcbAttrAll > 0xffff else ppcbAttrAll
         self.board.ExportASCII(file, sections, ver, expandAttrs)
+
+    def export_hyp(self, file):
+        self.run_pour_manager()
+        self.run_export_hyp(file)
+
+    def run_export_hyp(self, file=None):
+        hyp_file = file
+        if hyp_file is None:
+            hyp_file = path(self.app.FullName).with_suffix('.hyp')
+
+        dirname = PADSPROD_ROOT
+        origin = mcrPPcbCmdList['PPcbExportHypMacro']
+        macro_file = path.joinpath(dirname, 'macros', origin)
+
+        t = Template(MACRO_OPS_4)
+        d = {
+            "hyp_file": hyp_file,
+            "missing_height": 25,
+        }
+        macro_content = t.substitute(d)
+        path.write_text(macro_file, macro_content)
+
+        self.run_macro(macro_file)
+
+    def run_pour_manager(self):
+        dirname = PADSPROD_ROOT
+        origin = mcrPPcbCmdList['PPcbPourMangerMacro']
+        macro_file = path.joinpath(dirname, 'macros', origin)
+
+        t = Template(MACRO_OPS_3)
+        d = {
+            "flood_mode": 'Flood',
+        }
+        macro_content = t.substitute(d)
+        path.write_text(macro_file, macro_content)
+
+        self.run_macro(macro_file)
 
     def run_macro(self, macro_file):
         dirname = PADSPROD_ROOT
