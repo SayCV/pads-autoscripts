@@ -167,8 +167,8 @@ def main():
         "--to", "--write",
         dest='out_format',
         metavar='FORMAT',
-        help="sch|pcb|asc|hyp|txt|pdf",
-        choices=["sch", "pcb", "asc", "hyp", "txt", "pdf"],
+        help="sch|pcb|asc|hyp|pjh|txt|pdf",
+        choices=["sch", "pcb", "asc", "hyp", "pjh", "txt", "pdf"],
         default=None,
     )
 

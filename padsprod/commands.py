@@ -42,11 +42,11 @@ def run_info(args):
         pcb = pcb_util.PCB(args, board_file, set_visible)
         pcb.info()
         pcb.close()
-    elif in_format == 'hyp':
+    elif in_format == 'hyp' or in_format == 'pjh':
         board_file = input
         set_visible = False
         hyp =hyp_util.HYP(args, board_file, set_visible)
-        hyp.info()
+        hyp.save_components_nets()
         hyp.close()
     else:
         logger.info(f"Info Command Unimplemented! -- {in_format}")
@@ -221,11 +221,11 @@ def run_simu(args):
         logger.error("No input format found")
         sys.exit(1)
 
-    if in_format == 'hyp':
+    if in_format == 'hyp' or in_format == 'pjh':
         board_file = input
         set_visible = False
         hyp = hyp_util.HYP(args, board_file, set_visible)
-        hyp.info()
+        hyp.save_components_nets()
         hyp.close()
     else:
         logger.info(f"Simu Command Unimplemented! -- {in_format}")

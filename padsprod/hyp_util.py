@@ -61,6 +61,11 @@ class HYP(object):
 
     def info(self):
         logger.info(f'This HYP file includes Boards: {self.boards.Count}, Components: {self.components.Count}, Nets: {self.nets.Count}')
+
+    def set_visible(self, visible):
+        self.app.Visible = visible
+
+    def save_components_nets(self):
         components = []
         for _comp in self.design.Components:
             comp = IHLDbComp(_comp)
@@ -89,6 +94,3 @@ class HYP(object):
         output_file = self.board_file.with_suffix('.nets.txt')
         output_file.parent.mkdir(exist_ok=True)
         output_file.write_text('\n'.join(nets))
-
-    def set_visible(self, visible):
-        self.app.Visible = visible
