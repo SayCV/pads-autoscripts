@@ -42,6 +42,12 @@ def run_info(args):
         pcb = pcb_util.PCB(args, board_file, set_visible)
         pcb.info()
         pcb.close()
+    elif in_format == 'hyp':
+        board_file = input
+        set_visible = False
+        hyp =hyp_util.HYP(args, board_file, set_visible)
+        hyp.info()
+        hyp.close()
     else:
         logger.info(f"Info Command Unimplemented! -- {in_format}")
 
