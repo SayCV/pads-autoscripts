@@ -54,6 +54,9 @@ class HYP(object):
             logger.warning("No input file found")
             pass
 
+    def close(self):
+        self.app.Exit()
+
     def info(self):
         logger.info(f'This HYP file includes Components: {self.design.Components.Count}, Nets: {self.design.Nets.Count}')
 
