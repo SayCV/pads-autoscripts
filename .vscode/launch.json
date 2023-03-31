@@ -66,6 +66,18 @@
             ]
         },
         {
+            "name": "Test HYP Info",
+            "type": "python",
+            "request": "launch",
+            "program": "test.py",
+            "console": "integratedTerminal",
+            "args": [
+                "info", 
+                "--input=data/demo1.hyp", 
+                "--debug",
+            ]
+        },
+        {
             "name": "Python: Remote Attach",
             "type": "python",
             "request": "attach",

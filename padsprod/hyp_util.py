@@ -21,7 +21,7 @@ from .sch_constants import *
 logger = logging.getLogger(__name__)
 
 class HYP(object):
-    def __init__(self, args, board_file, visible):
+    def __init__(self, args, board_file: path, visible):
         macro_dir = path.joinpath(PADSPROD_ROOT, 'macros')
         if not path.exists(macro_dir):
             path.mkdir(macro_dir)
@@ -38,10 +38,12 @@ class HYP(object):
         else:
             logger.error(f"Unable to open specified file: {board_file}")
             self.app.Exit()
+            sys.exit(-1)
             return
         self.design = IHLDesign(self.app.Design)
-        self.boards = IHLCollection(self.design.Boards)
-        self.nets = IHLCollection(self.design.Nets)
+        self.boards = self.design.Boards
+        self.components = self.design.Components
+        self.nets = self.design.Nets
         self.multi_parts = []
         self.components_class = {}
 
@@ -58,7 +60,35 @@ class HYP(object):
         self.app.Exit()
 
     def info(self):
-        logger.info(f'This HYP file includes Components: {self.design.Components.Count}, Nets: {self.design.Nets.Count}')
+        logger.info(f'This HYP file includes Boards: {self.boards.Count}, Components: {self.components.Count}, Nets: {self.nets.Count}')
+        components = []
+        for _comp in self.design.Components:
+            comp = IHLDbComp(_comp)
+            try:
+                value = comp.Value
+            except Exception as e:
+                value = ''
+            if value is None:
+                value = ''
+            try:
+                model = comp.Model
+            except Exception as e:
+                model = ''
+            if model is None:
+                model = ''
+            components.append(f'{comp.RefDes:15}, {comp.PartType:32}, {comp.Type:15}, {value:15}, {model:15}')
+        nets = []
+        for _net in self.nets:
+            net = IHLDbNet(_net)
+            nets.append(f'{net.Name:32}, {net.Length:15}')
+
+        output_file = self.board_file.with_suffix('.components.txt')
+        output_file.parent.mkdir(exist_ok=True)
+        output_file.write_text('\n'.join(components))
+
+        output_file = self.board_file.with_suffix('.nets.txt')
+        output_file.parent.mkdir(exist_ok=True)
+        output_file.write_text('\n'.join(nets))
 
     def set_visible(self, visible):
         self.app.Visible = visible

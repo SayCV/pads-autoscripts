@@ -23,7 +23,7 @@ def main():
             application_list.append(key)
 
     output_file = path.cwd() / 'data' / 'query_application_in_winreg.txt'
-    output_file.mkdir(exist_ok=True)
+    output_file.parent.mkdir(exist_ok=True)
     output_file.write_text('\n'.join(application_list))
 
 if __name__ == '__main__':
