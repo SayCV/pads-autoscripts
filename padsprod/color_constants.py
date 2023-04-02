@@ -2,9 +2,11 @@
 elements formatted: colors[colorname] = CONSTANT"""
 
 
-from collections import namedtuple, OrderedDict
+from collections import OrderedDict, namedtuple
+
 Color = namedtuple('RGB','red, green, blue')
 colors = {} #dict of colors
+
 class RGB(Color):
 	def get_color_name(self):
 		'''Returns color name'''
@@ -1175,6 +1177,3 @@ colors['yellow3'] = YELLOW3
 colors['yellow4'] = YELLOW4
 colors['yellow5'] = YELLOW5
 colors = OrderedDict(sorted(colors.items(), key=lambda t: t[0]))
-
-	
-	

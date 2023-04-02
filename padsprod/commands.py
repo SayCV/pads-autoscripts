@@ -2,18 +2,11 @@
 
 """
 
-import argparse
-import binascii
-import string
-import sys
-import os
 import logging
+import sys
 from pathlib import Path as path
 
-import colorama
-import questionary
-
-from . import sch_util, pcb_util, hyp_util
+from . import hyp_util, pcb_util, sch_util
 
 logger = logging.getLogger(__name__)
 
