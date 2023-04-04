@@ -166,6 +166,8 @@ class PCB(object):
         print(f"Board Size: {dBoardSize: .2f} mm²")
         self.board.unit = old_unit
 
+        self.guess_power_nets()
+
     def set_visible(self, visible):
         self.app.Visible = visible
 
@@ -360,3 +362,15 @@ class PCB(object):
         if save:
             self.board.SaveAsTemp(path(self.app.DefaultFilePath) / 'default.pcb')
         self.app.Quit()
+
+    def guess_power_nets(self):
+        top_power_nets = []
+        bot_power_nets = []
+        for _net in self.board.Nets:
+            net = IPowerPCBNet(_net)
+            layer = IPowerPCBLayer(self.get_layer_by_name('Top'))
+            net_is_power: bool = net.Power
+            if net_is_power:
+                top_power_nets.append(net.Name)
+            
+        print(top_power_nets)
