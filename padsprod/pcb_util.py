@@ -126,6 +126,7 @@ mcrPPcbCmdList = {
     "PPcbExportPdfMacro": "Macro2.mcr",
     "PPcbPourMangerMacro": "Macro3.mcr",
     "PPcbExportHypMacro": "Macro4.mcr",
+    "PPcbDraftingText": "Macro5.mcr",
 }
 
 
@@ -144,6 +145,31 @@ class Layer(object):
     def get_name(self):
         return self.pcb.get_layer_name(self.layer_id)
 
+class TextConfig(object):
+    def __init__(self, text='', text_px=0.0, text_py=0.0, text_height=0.0, line_width=0.0, layer_name=''):
+        self.text = text
+        self.text_px = text_px
+        self.text_py = text_py
+        self.text_height = text_height
+        self.line_width = line_width
+        self.layer_name = layer_name
+
+    def set_text(self, text):
+        self.text = text
+
+    def set_text_point(self, px, py):
+        self.text_px = px
+        self.text_py = py
+
+    def set_text_height(self, text_height):
+        self.text_height = text_height,
+
+    def set_line_width(self, line_width):
+        self.line_width = line_width,
+
+    def set_layer_name(self, layer_name):
+        self.layer_name = layer_name,
+
 
 class PCB(object):
     def __init__(self, args, board_file, visible):
@@ -160,6 +186,7 @@ class PCB(object):
         self.app.Visible = visible
         self.board = IPowerPCBDoc(self.app.OpenDocument(board_file))
         self.layers = self.board.Layers
+        self.added_pwrsilk = False
 
         self.app.StatusBarText = 'Running in python: ' + \
             str(datetime.datetime.now())
@@ -199,8 +226,7 @@ class PCB(object):
         dBoardSize = self.board.BoardOutlineSurface
         print(f"Board Size: {dBoardSize: .2f} mm²")
         self.board.unit = old_unit
-
-        self.get_power_nets()
+        pass
 
     def set_visible(self, visible):
         self.app.Visible = visible
@@ -391,6 +417,12 @@ class PCB(object):
             color_idxs.append(color_idx)
 
         logger.status(f'Export to pdf from {layer_name} layer.')
+
+        if not self.args.disable_pwrsilk and not self.added_pwrsilk:
+            # self.set_layer_color_by_id(layer_number, color_idxs)
+            self.add_silk_to_power_nets()
+            self.added_pwrsilk = True
+
         self.set_layer_color_by_id(layer_number, color_idxs)
         macro_file = self._config_macro_ppcb_export_pdf(pdf, layer_number)
         self.run_macro(macro_file)
@@ -547,7 +579,39 @@ class PCB(object):
         #_fields = matched.groupdict()
         return vcc
 
-    def add_silk_to_power_nets(self, nets: dict):
-        top_silk_to_layer = self.get_layer_by_name('Assembly Drawing Top')
-        bot_silk_to_layer = self.get_layer_by_name('Assembly Drawing Bottom')
-        pass
+    def add_silk_to_power_nets(self):
+        nets = self.get_power_nets()
+        for idx, net in enumerate(nets):
+            for layer in ['top', 'bottom']:
+                if nets[net][layer]['lucky']:
+                    lucky_comp = IPowerPCBComp(nets[net][layer]['lucky'])
+                    text = str(idx + 1)
+                    text_px = lucky_comp.CenterX
+                    text_py = lucky_comp.CenterY
+                    text_height = 160
+                    line_width = 16
+                    layer_name = 'Assembly Drawing Top' if layer == 'top' else 'Assembly Drawing Bottom'
+                    config = TextConfig(text, text_px, text_py, text_height, line_width, layer_name)
+                    self.run_add_text(config)
+                else:
+                    logger.info(f"Not found {net} related components in {layer}")
+        logger.info(f"Added silk to power nets done.")
+
+    def run_add_text(self, config:TextConfig):
+        dirname = PADSPROD_ROOT
+        origin = mcrPPcbCmdList['PPcbDraftingText']
+        macro_file = path.joinpath(dirname, 'macros', origin)
+
+        t = Template(MACRO_OPS_5)
+        d = {
+            "text": config.text,
+            "text_px": config.text_px,
+            "text_py": config.text_py,
+            "text_height": config.text_height,
+            "line_width": config.line_width,
+            "layer": config.layer_name,
+        }
+        macro_content = t.substitute(d)
+        path.write_text(macro_file, macro_content)
+
+        self.run_macro(macro_file)

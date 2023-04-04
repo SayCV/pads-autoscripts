@@ -37,3 +37,16 @@ MissingHeightDlg.Height = "${missing_height}"
 MissingHeightDlg.ForAllParts = true
 MissingHeightDlg.Ok.Click()
 """
+
+MACRO_OPS_5 = r"""
+Application.ShowBar("Drafting Toolbar")
+Application.ExecuteCommand("Create Text")
+AddFreeTextDlg.TextString = "${text}"
+AddFreeTextDlg.XCoord = "${text_px}"
+AddFreeTextDlg.YCoord = "${text_py}"
+AddFreeTextDlg.TextHeight = "${text_height}"
+AddFreeTextDlg.LineWidth = "${line_width}"
+AddFreeTextDlg.LayerName = "${layer}"
+AddFreeTextDlg.Ok.Click()
+AddFreeTextDlg.Cancel.Click()
+"""

@@ -132,6 +132,9 @@ def main():
         type=int,
         help="The pcb layer.",
     )
+    parent.add_argument(
+        "--disable-pwrsilk", action="store_true", help="Export top/bot layer with power index silk"
+    )
 
     # Parser for all output formatting related flags shared by multiple
     # commands.
