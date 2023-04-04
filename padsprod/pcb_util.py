@@ -401,7 +401,7 @@ class PCB(object):
                 path(self.app.DefaultFilePath) / 'default.pcb')
         self.app.Quit()
 
-    def get_power_nets(self):
+    def get_power_nets(self) -> dict:
         components_power_nets = {}
         #    'n/a': {'top': {
         #        'ttl': [],
@@ -457,31 +457,45 @@ class PCB(object):
                     def lucky_comp_sorted(a, b):
                         a = IPowerPCBComp(a)
                         b = IPowerPCBComp(b)
-                        a_fp = re.find(r'\w+\d+', a.Decal)
-                        b_fp = re.find(r'\w+\d+', b.Decal)
-                        if int(a_fp) - int(b_fp) < 1:
+
+                        pattern = re.compile(r'[A-Za-z]+(\d+)')
+                        matched = pattern.match(a.Decal)
+                        #print(matched.groups())
+                        a_fp = matched.group(1) if matched else 0
+                        matched = pattern.match(b.Decal)
+                        b_fp = matched.group(1) if matched else 0
+
+                        if int(a_fp) < int(b_fp):
                             return 1 # b, a
-                        return 0  # a = b
+                        else:
+                            return -1
 
                     lucky_comp = None
                     for layer in ['top', 'bottom']:
                         if len(power_net_components[layer]['cap']) > 0:
-                            caps = power_net_components[layer]['cap']
+                            caps = power_net_components[layer]['cap'].copy()
                             _sorted_caps = sorted(caps, key=functools.cmp_to_key(lucky_comp_sorted))
                             power_net_components[layer]['cap'] = _sorted_caps
-                            break
+                            power_net_components[layer]['lucky'] = _sorted_caps[0]
+                            pass
                         elif len(power_net_components[layer]['ind']) > 0:
                             inds = power_net_components[layer]['ind']
                             _sorted_inds = sorted(inds, key=functools.cmp_to_key(lucky_comp_sorted))
                             power_net_components[layer]['ind'] = _sorted_inds
-                            break
+                            power_net_components[layer]['lucky'] = _sorted_inds[0]
+                            pass
                         elif len(power_net_components[layer]['res']) > 0:
                             ress = power_net_components[layer]['res']
                             _sorted_ress = sorted(ress, key=functools.cmp_to_key(lucky_comp_sorted))
                             power_net_components[layer]['res'] = _sorted_ress
-                            break
+                            power_net_components[layer]['lucky'] = _sorted_ress[0]
+                            pass
+                        else:
+                            power_net_components[layer]['lucky'] = None
+                        if power_net_components[layer]['lucky']:
+                            logger.debug(f"{layer} = {IPowerPCBComp(power_net_components[layer]['lucky']).Name}")
                     components_power_nets[net_humanize] = power_net_components
-                    pass
+        return components_power_nets
 
     def guess_power_nets(self, net_name):
         re_power_ex1 = r'([+-]*\d+[\.\d]*)V$'
@@ -532,3 +546,8 @@ class PCB(object):
 
         #_fields = matched.groupdict()
         return vcc
+
+    def add_silk_to_power_nets(self, nets: dict):
+        top_silk_to_layer = self.get_layer_by_name('Assembly Drawing Top')
+        bot_silk_to_layer = self.get_layer_by_name('Assembly Drawing Bottom')
+        pass
