@@ -1,17 +1,20 @@
 
 import datetime
 import enum
+import functools
 import logging
 import os
 from pathlib import Path as path
+import re
 from string import Template
 
 from mputils import *
 
 from padsprod.helper import PADSPROD_ROOT
 
-from .color_constants import colors
-from .pcb_constants import *
+from padsprod.color_constants import colors
+from padsprod.pcb_constants import *
+import toml
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +40,7 @@ layerPcbItem = [
     'Trace',      'Via',           'Pad',    'Copper',   'Line',      'Text',    'Error',
     'OutlineTop', 'OutlineBottom', 'RefDes', 'PartType', 'Attribute', 'Keepout', 'PinNumber'
 ]
+
 
 class PPcbLayerColorType(enum.Enum):
     ppcbLayerColorTrace = 0
@@ -67,15 +71,40 @@ class PPcbLayerColorType(enum.Enum):
 
     ppcbLayerColorPinNumber = 13
 
+
 class PPcbDefaultPaletteColorList(enum.Enum):
-    ID0 = colors['black'];            ID1 = colors['navy'];        ID2 = colors['green'];           ID3 = colors['teal'];
-    ID4 = colors['maroon'];           ID5 = colors['purple'];      ID6 = colors['olive'];           ID7 = colors['gray'];
-    ID8 = colors['silver'];           ID9 = colors['blue'];        ID10 = colors['green1'];         ID11 = colors['aqua'];
-    ID12 = colors['red'];             ID13 = colors['magenta'];    ID14 = colors['yellow'];         ID15 = colors['white'];
-    ID16 = colors['yellow5'];         ID17 = colors['teal1'];      ID18 = colors['springgreen4'];   ID19 = colors['deepskyblue'];
-    ID20 = colors['cadmiumorange1'];  ID21 = colors['warmgrey1'];  ID22 = colors['rawsienna1'];     ID23 = colors['deeppink2'];
-    ID24 = colors['lightgoldenrod4']; ID25 = colors['teal2'];      ID26 = colors['forestgreen1'];   ID27 = colors['darkslategray1'];
-    ID28 = colors['indianred1'];      ID29 = colors['silver1'];    ID30 = colors['cadmiumyellow1']; ID31 = colors['maroon1']
+    ID0 = colors['black']
+    ID1 = colors['navy']
+    ID2 = colors['green']
+    ID3 = colors['teal']
+    ID4 = colors['maroon']
+    ID5 = colors['purple']
+    ID6 = colors['olive']
+    ID7 = colors['gray']
+    ID8 = colors['silver']
+    ID9 = colors['blue']
+    ID10 = colors['green1']
+    ID11 = colors['aqua']
+    ID12 = colors['red']
+    ID13 = colors['magenta']
+    ID14 = colors['yellow']
+    ID15 = colors['white']
+    ID16 = colors['yellow5']
+    ID17 = colors['teal1']
+    ID18 = colors['springgreen4']
+    ID19 = colors['deepskyblue']
+    ID20 = colors['cadmiumorange1']
+    ID21 = colors['warmgrey1']
+    ID22 = colors['rawsienna1']
+    ID23 = colors['deeppink2']
+    ID24 = colors['lightgoldenrod4']
+    ID25 = colors['teal2']
+    ID26 = colors['forestgreen1']
+    ID27 = colors['darkslategray1']
+    ID28 = colors['indianred1']
+    ID29 = colors['silver1']
+    ID30 = colors['cadmiumyellow1']
+    ID31 = colors['maroon1']
 
     @staticmethod
     def get_idx(color_name):
@@ -91,11 +120,12 @@ class PPcbDefaultPaletteColorList(enum.Enum):
                 return PPcbDefaultPaletteColorList(val).value
         return PPcbDefaultPaletteColorList.ID0.value
 
+
 mcrPPcbCmdList = {
-    "PPcbResetDefaultPaletteMacro" : "Macro1.mcr",
-    "PPcbExportPdfMacro" : "Macro2.mcr",
-    "PPcbPourMangerMacro" : "Macro3.mcr",
-    "PPcbExportHypMacro" : "Macro4.mcr",
+    "PPcbResetDefaultPaletteMacro": "Macro1.mcr",
+    "PPcbExportPdfMacro": "Macro2.mcr",
+    "PPcbPourMangerMacro": "Macro3.mcr",
+    "PPcbExportHypMacro": "Macro4.mcr",
 }
 
 
@@ -120,16 +150,17 @@ class PCB(object):
         macro_dir = path.joinpath(PADSPROD_ROOT, 'macros')
         if not path.exists(macro_dir):
             path.mkdir(macro_dir)
-        
+
         logger.status(f'Opening: {board_file}')
         self.args = args
+        self.board_file = board_file
         self.name = os.path.splitext(os.path.basename(board_file))[0]
         self.mputils = mputils()
         self.app = self.mputils.PADSPCBApplication()
         self.app.Visible = visible
         self.board = IPowerPCBDoc(self.app.OpenDocument(board_file))
         self.layers = self.board.Layers
-        
+
         self.app.StatusBarText = 'Running in python: ' + \
             str(datetime.datetime.now())
         logger.status(f"{self.app.StatusBarText}")
@@ -140,7 +171,8 @@ class PCB(object):
             pass
 
     def info(self):
-        logger.info(f'This PCB file includes Components: {self.board.Components.Count}, Layers: {self.board.ElectricalLayerCount}')
+        logger.info(
+            f'This PCB file includes Components: {self.board.Components.Count}, Layers: {self.board.ElectricalLayerCount}')
         print('Board Stackup:')
 
         metal_layers_count = 0
@@ -157,16 +189,18 @@ class PCB(object):
             pcb_thick += layer.GetDielectricThickness(ppcbDielectricLayerAbove)
         print(
             f'Board layers: Total {self.layers.Count}, includes {metal_layers_count} metal, {diele_layers_count} dielectric')
-        _key = list(strPPcbUnit.keys())[list(strPPcbUnit.values()).index(self.board.unit)]
+        _key = list(strPPcbUnit.keys())[
+            list(strPPcbUnit.values()).index(self.board.unit)]
         print(f'Board Thickness: {pcb_thick:.2f} {_key}')
-        print(f'Board Origin Point: px={self.board.OriginX}, py={self.board.OriginY}')
+        print(
+            f'Board Origin Point: px={self.board.OriginX}, py={self.board.OriginY}')
         old_unit = self.board.unit
         self.board.unit = strPPcbUnit['Metric']
         dBoardSize = self.board.BoardOutlineSurface
         print(f"Board Size: {dBoardSize: .2f} mm²")
         self.board.unit = old_unit
 
-        self.guess_power_nets()
+        self.get_power_nets()
 
     def set_visible(self, visible):
         self.app.Visible = visible
@@ -200,7 +234,8 @@ class PCB(object):
             color = PPcbDefaultPaletteColorList.get_value_by_idx(color_seq)
             color_name.append(color.get_color_name())
         print(f"{'Layers':25} {'Trace':10} {'Via':10} {'Pad':10} {'Copper':10} {'Line':10} {'Text':10} {'Error':10}")
-        print(f"{layer.Name:25} {color_name[0]:10} {color_name[1]:10} {color_name[2]:10} {color_name[3]:10} {color_name[4]:10} {color_name[5]:10} {color_name[6]:10}")
+        print(
+            f"{layer.Name:25} {color_name[0]:10} {color_name[1]:10} {color_name[2]:10} {color_name[3]:10} {color_name[4]:10} {color_name[5]:10} {color_name[6]:10}")
 
     def get_layer_color_by_id(self, layer_id):
         layer = self.get_layer_by_id(layer_id)
@@ -285,7 +320,7 @@ class PCB(object):
         macro_file = path.joinpath(dirname, 'macros', origin)
 
         t = Template(MACRO_OPS_1)
-        d = { }
+        d = {}
         macro_content = t.substitute(d)
         path.write_text(macro_file, macro_content)
 
@@ -308,17 +343,19 @@ class PCB(object):
             pdf = path.joinpath(pdf.parent, pdf.stem + '-bot-silk.pdf')
             pdc_name = PPCB_EXPORT_PDF_BOT_SILK_PDC
             silk_layer_number = self.get_layer_id('Silkscreen Bottom')
-            assembly_layer_number = self.get_layer_id('Assembly Drawing Bottom')
+            assembly_layer_number = self.get_layer_id(
+                'Assembly Drawing Bottom')
         elif layer_name == 'Drill Drawing':
             pdf = path.joinpath(pdf.parent, pdf.stem + '-drill-drawing.pdf')
             pdc_name = PPCB_EXPORT_PDF_DRAWING_PDC
         else:
-            pdf = path.joinpath(pdf.parent, pdf.stem + f'-L{layer_number:02}.pdf')
+            pdf = path.joinpath(pdf.parent, pdf.stem +
+                                f'-L{layer_number:02}.pdf')
             pdc_name = PPCB_EXPORT_PDF_MID_LAYER_PDC
-        
-        #if layer_name.isnumeric():
+
+        # if layer_name.isnumeric():
         #    layer_number = int(layer_name)
-        #else:
+        # else:
         #    layer_number = self.get_layer_id(layer_name)
 
         t = Template(MACRO_OPS_2)
@@ -333,7 +370,7 @@ class PCB(object):
         pdc_file = path.joinpath(dirname, 'macros', pdc_name + '.pdc')
         pdc_tpl = path.joinpath(dirname, 'config', pdc_name + '.tpl')
         t = Template(path.read_text(pdc_tpl))
-        d = { 
+        d = {
             "layer": layer_number,
             "silk_layer": silk_layer_number,
             "assembly_layer": assembly_layer_number,
@@ -360,17 +397,138 @@ class PCB(object):
 
     def close(self, save=True):
         if save:
-            self.board.SaveAsTemp(path(self.app.DefaultFilePath) / 'default.pcb')
+            self.board.SaveAsTemp(
+                path(self.app.DefaultFilePath) / 'default.pcb')
         self.app.Quit()
 
-    def guess_power_nets(self):
-        top_power_nets = []
-        bot_power_nets = []
-        for _net in self.board.Nets:
-            net = IPowerPCBNet(_net)
-            layer = IPowerPCBLayer(self.get_layer_by_name('Top'))
-            net_is_power: bool = net.Power
-            if net_is_power:
-                top_power_nets.append(net.Name)
-            
-        print(top_power_nets)
+    def get_power_nets(self):
+        components_power_nets = {}
+        #    'n/a': {'top': {
+        #        'ttl': [],
+        #        'res': [],
+        #        'cap': [],
+        #        'ind': [],
+        #    }, 'bottom': {
+        #        'ttl': [],
+        #        'res': [],
+        #        'cap': [],
+        #        'ind': [],
+        #    }, }
+
+        metadata_file = path(self.board_file).with_suffix('.metadata.toml')
+        data = toml.load(metadata_file)
+        power_nets = data.get('power_nets')
+        print(power_nets)
+        for net in power_nets:
+            net_humanize = net[0]
+            if len(net) > 1:
+                net_name = net[1]
+            else:
+                net_name = net[0]
+
+            for _pcb_net in self.board.Nets:
+                _pcb_net = IPowerPCBNet(_pcb_net)
+                if net_name == _pcb_net.Name:
+                    components_power_nets[net_humanize] = {}
+                    power_net_components = {}
+                    _pins = _pcb_net.Pins
+                    for _pin in _pins:
+                        _pin = IPowerPCBPin(_pin)
+                        comp = IPowerPCBComp(_pin.Component)
+                        # print(comp.PartTypeLogic)
+                        if comp.LayerName in 'Top' or comp.LayerName in 'Bottom':
+                            if not comp.LayerName.lower() in power_net_components:
+                                power_net_components[comp.LayerName.lower()] = {}
+                            if not comp.PartTypeLogic.lower() in power_net_components[comp.LayerName.lower()]:
+                                power_net_components[comp.LayerName.lower()][comp.PartTypeLogic.lower()] = []
+                            power_net_components[comp.LayerName.lower()][comp.PartTypeLogic.lower()].append(comp)
+
+                    type_alias_name = {'ttl':'ICs', 'res':'resistors', 'cap':'capacitors', 'ind':'inductances'}
+                    for layer in ['top', 'bottom']:
+                        debug_string = f"Net({net_humanize:16}) in {layer[:3]} includes "
+                        if not layer in power_net_components:
+                            power_net_components[layer] = {}
+                        for type in ['ttl', 'res', 'cap', 'ind']:
+                            if not type in power_net_components[layer]:
+                                power_net_components[layer][type] = []
+                            debug_string += f"{len(power_net_components[layer][type]):3} {type_alias_name[type]},"
+                        logger.debug(debug_string.rstrip(','))
+
+                    def lucky_comp_sorted(a, b):
+                        a = IPowerPCBComp(a)
+                        b = IPowerPCBComp(b)
+                        a_fp = re.find(r'\w+\d+', a.Decal)
+                        b_fp = re.find(r'\w+\d+', b.Decal)
+                        if int(a_fp) - int(b_fp) < 1:
+                            return 1 # b, a
+                        return 0  # a = b
+
+                    lucky_comp = None
+                    for layer in ['top', 'bottom']:
+                        if len(power_net_components[layer]['cap']) > 0:
+                            caps = power_net_components[layer]['cap']
+                            _sorted_caps = sorted(caps, key=functools.cmp_to_key(lucky_comp_sorted))
+                            power_net_components[layer]['cap'] = _sorted_caps
+                            break
+                        elif len(power_net_components[layer]['ind']) > 0:
+                            inds = power_net_components[layer]['ind']
+                            _sorted_inds = sorted(inds, key=functools.cmp_to_key(lucky_comp_sorted))
+                            power_net_components[layer]['ind'] = _sorted_inds
+                            break
+                        elif len(power_net_components[layer]['res']) > 0:
+                            ress = power_net_components[layer]['res']
+                            _sorted_ress = sorted(ress, key=functools.cmp_to_key(lucky_comp_sorted))
+                            power_net_components[layer]['res'] = _sorted_ress
+                            break
+                    components_power_nets[net_humanize] = power_net_components
+                    pass
+
+    def guess_power_nets(self, net_name):
+        re_power_ex1 = r'([+-]*\d+[\.\d]*)V$'
+        re_power_ex2 = r'([+-]*\d+)V(\d+)$'
+        re_power_ex3 = r'VCC(\d+[\.+\d+])V'
+        re_power_ex4 = r'[PN]*VCC(\d+)V([\d+])'
+        re_power_ex5 = r'V(\d+[\.+\d+])[V]*'
+        re_power_ex6 = r'[PN]*V(\d+)[V]*'
+        vcc = None
+
+        pattern = re.compile(re_power_ex1)
+        matched = pattern.match(net_name)
+        if matched:
+            vcc = matched.group(1)
+        else:
+            #print(f'try re_power_ex2')
+            pattern = re.compile(re_power_ex2)
+            matched = pattern.match(net_name)
+            if matched:
+                vcc = f"{matched.group(1)}.{matched.group(2)}"
+        if not matched:
+            #print(f'try re_power_ex3')
+            pattern = re.compile(re_power_ex3)
+            matched = pattern.match(net_name)
+            if matched:
+                vcc = f"{matched.group(1)}.{matched.group(2)}"
+        if not matched:
+            #print(f'try re_power_ex4')
+            pattern = re.compile(re_power_ex4)
+            matched = pattern.match(net_name)
+            if matched:
+                vcc = f"{matched.group(1)}.{matched.group(2)}"
+        if not matched:
+            #print(f'try re_power_ex5')
+            pattern = re.compile(re_power_ex5)
+            matched = pattern.match(net_name)
+            if matched:
+                vcc = f"{matched.group(1)}.{matched.group(2)}"
+        if not matched:
+            #print(f'try re_power_ex6')
+            pattern = re.compile(re_power_ex6)
+            matched = pattern.match(net_name)
+            if matched:
+                vcc = matched.group(1)
+        if not matched:
+            #print('Not found.')
+            vcc = None
+
+        #_fields = matched.groupdict()
+        return vcc
