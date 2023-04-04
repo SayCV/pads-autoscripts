@@ -146,13 +146,14 @@ class Layer(object):
         return self.pcb.get_layer_name(self.layer_id)
 
 class TextConfig(object):
-    def __init__(self, text='', text_px=0.0, text_py=0.0, text_height=0.0, line_width=0.0, layer_name=''):
+    def __init__(self, text='', text_px=0.0, text_py=0.0, text_height=0.0, line_width=0.0, layer_name='', mirrored=False):
         self.text = text
         self.text_px = text_px
         self.text_py = text_py
         self.text_height = text_height
         self.line_width = line_width
         self.layer_name = layer_name
+        self.mirrored = mirrored
 
     def set_text(self, text):
         self.text = text
@@ -169,6 +170,9 @@ class TextConfig(object):
 
     def set_layer_name(self, layer_name):
         self.layer_name = layer_name,
+
+    def set_mirrored(self, mirrored):
+        self.mirrored = mirrored,
 
 
 class PCB(object):
@@ -414,16 +418,26 @@ class PCB(object):
                 color_idx = PPcbDefaultPaletteColorList.get_idx('silver')
             elif item == PPcbLayerColorType.ppcbLayerColorRefDes:
                 color_idx = PPcbDefaultPaletteColorList.get_idx('white')
+            elif item == PPcbLayerColorType.ppcbLayerColorText:
+                if not self.args.disable_pwrsilk:
+                    color_idx = PPcbDefaultPaletteColorList.get_idx('red')
             color_idxs.append(color_idx)
 
         logger.status(f'Export to pdf from {layer_name} layer.')
+        self.set_layer_color_by_id(layer_number, color_idxs)
 
         if not self.args.disable_pwrsilk and not self.added_pwrsilk:
             # self.set_layer_color_by_id(layer_number, color_idxs)
+            #layer = self.get_layer_by_name('Top')
+            #layer.SetColor(PPcbLayerColorType.ppcbLayerColorText, PPcbDefaultPaletteColorList.get_idx('white'))
             self.add_silk_to_power_nets()
             self.added_pwrsilk = True
+        # No affect
+        #if layer_name == 'Top' and not self.args.disable_pwrsilk:
+        #    self.board.ActiveLayer = self.get_layer_id('Silkscreen Top')
+        #if layer_name == 'Bottom' and not self.args.disable_pwrsilk:
+        #    self.board.ActiveLayer = self.get_layer_id('Silkscreen Bottom')
 
-        self.set_layer_color_by_id(layer_number, color_idxs)
         macro_file = self._config_macro_ppcb_export_pdf(pdf, layer_number)
         self.run_macro(macro_file)
 
@@ -590,8 +604,9 @@ class PCB(object):
                     text_py = lucky_comp.CenterY
                     text_height = 160
                     line_width = 16
-                    layer_name = 'Assembly Drawing Top' if layer == 'top' else 'Assembly Drawing Bottom'
-                    config = TextConfig(text, text_px, text_py, text_height, line_width, layer_name)
+                    layer_name = 'Top' if layer == 'top' else 'Bottom'
+                    mirrored = False if layer == 'top' else True
+                    config = TextConfig(text, text_px, text_py, text_height, line_width, layer_name, mirrored)
                     self.run_add_text(config)
                 else:
                     logger.info(f"Not found {net} related components in {layer}")
@@ -610,6 +625,7 @@ class PCB(object):
             "text_height": config.text_height,
             "line_width": config.line_width,
             "layer": config.layer_name,
+            "mirrored": 'true' if config.mirrored else 'false',
         }
         macro_content = t.substitute(d)
         path.write_text(macro_file, macro_content)

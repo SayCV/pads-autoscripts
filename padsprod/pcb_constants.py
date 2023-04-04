@@ -47,6 +47,7 @@ AddFreeTextDlg.YCoord = "${text_py}"
 AddFreeTextDlg.TextHeight = "${text_height}"
 AddFreeTextDlg.LineWidth = "${line_width}"
 AddFreeTextDlg.LayerName = "${layer}"
+AddFreeTextDlg.Mirrored = ${mirrored}
 AddFreeTextDlg.Ok.Click()
 AddFreeTextDlg.Cancel.Click()
 """
