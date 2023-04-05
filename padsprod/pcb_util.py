@@ -461,10 +461,28 @@ class PCB(object):
         #        'ind': [],
         #    }, }
 
-        metadata_file = path(self.board_file).with_suffix('.metadata.toml')
-        data = toml.load(metadata_file)
-        power_nets = data.get('power_nets')
-        print(power_nets)
+        _fields = path(self.board_file).stem.split('-')
+        _file2 = _fields[:2] if len(_fields) > 2 else None
+        metadata_file_lookup = [
+            path(self.board_file).with_suffix('.metadata.toml'),
+            path(self.board_file).parent / f'{_file2}-metadata.toml',
+            path(self.board_file).parent / 'metadata.toml',
+        ]
+        power_nets = None
+        for metadata_file in metadata_file_lookup:
+            try:
+                data = toml.load(metadata_file)
+                power_nets = data.get('power_nets')
+                logger.info(f"Try lookup {metadata_file} succeeded.")
+                break
+            except Exception as e:
+                logger.debug(f"Try lookup {metadata_file} failed and continue...")
+                continue
+        if not power_nets:
+            logger.error("Metadata file non exist")
+            raise RuntimeError("Metadata file non exist")
+        logger.debug(power_nets)
+
         for net in power_nets:
             net_humanize = net[0]
             if len(net) > 1:

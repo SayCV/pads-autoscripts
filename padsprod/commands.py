@@ -7,7 +7,6 @@ import sys
 from pathlib import Path as path
 
 from . import hyp_util, pcb_util, sch_util
-from .exceptions import PadsprodException
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +29,7 @@ def run_info(args):
         try:
             sch = sch_util.SCH(args, board_file, set_visible)
             sch.info()
-        except PadsprodException as e:
+        except Exception as e:
             logger.error(e)
         sch.close()
     elif in_format == 'pcb':
@@ -39,7 +38,7 @@ def run_info(args):
         try:
             pcb = pcb_util.PCB(args, board_file, set_visible)
             pcb.info()
-        except PadsprodException as e:
+        except Exception as e:
             logger.error(e)
         pcb.close()
     elif in_format == 'hyp' or in_format == 'pjh':
@@ -48,7 +47,7 @@ def run_info(args):
         try:
             hyp =hyp_util.HYP(args, board_file, set_visible)
             hyp.save_components_nets()
-        except PadsprodException as e:
+        except Exception as e:
             logger.error(e)
         hyp.close()
     else:
@@ -122,7 +121,7 @@ def run_export(args):
                         sch.run_macro_plog_export_pdf(output, page)
                 else:
                     sch.run_macro_plog_export_pdf(output, args.page)
-            except PadsprodException as e:
+            except Exception as e:
                 logger.error(e)
             sch.close()
         elif out_format == 'txt':
@@ -131,7 +130,7 @@ def run_export(args):
             try:
                 sch = sch_util.SCH(args, sch_file, visible)
                 sch.export_ascii(output)
-            except PadsprodException as e:
+            except Exception as e:
                 logger.error(e)
             sch.close()
         else:
@@ -159,7 +158,7 @@ def run_export(args):
                     pcb.run_macro_ppcb_export_pdf(output, drawing_layer_id)
                 else:
                     pcb.run_macro_ppcb_export_pdf(output, args.layer)
-            except PadsprodException as e:
+            except Exception as e:
                 logger.error(e)
             pcb.close()
         elif out_format == 'asc':
@@ -168,7 +167,7 @@ def run_export(args):
             try:
                 pcb = pcb_util.PCB(args, board_file, visible)
                 pcb.export_ascii(output)
-            except PadsprodException as e:
+            except Exception as e:
                 logger.error(e)
             pcb.close()
         elif out_format == 'hyp':
@@ -177,7 +176,7 @@ def run_export(args):
             try:
                 pcb = pcb_util.PCB(args, board_file, visible)
                 pcb.export_hyp(output)
-            except PadsprodException as e:
+            except Exception as e:
                 logger.error(e)
             pcb.close()
         else:
@@ -219,7 +218,7 @@ def run_renamerefs(args):
             if output is None:
                 output = input.with_suffix('.refs-renamed.sch')
             sch.save_as(path(output).absolute())
-        except PadsprodException as e:
+        except Exception as e:
             logger.error(e)
         sch.close(False)
         logger.status(f"Renamerefs {out_format} done.")
@@ -247,7 +246,7 @@ def run_simu(args):
         try:
             hyp = hyp_util.HYP(args, board_file, set_visible)
             hyp.save_components_nets()
-        except PadsprodException as e:
+        except Exception as e:
             logger.error(e)
         hyp.close()
     else:

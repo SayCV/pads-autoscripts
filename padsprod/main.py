@@ -14,10 +14,11 @@ import sys
 
 import argcomplete
 
+from padsprod import helper
+
 from . import commands
 from ._version import __version__
 from .exceptions import PadsprodException
-from padsprod import helper
 
 logger = logging.getLogger(__name__)
 
