@@ -20,6 +20,7 @@ install_requires = [
     "argcomplete >= 1.8.2",
     "colorama >= 0.3.7",
     "questionary >= 1.10.0",
+    "regpath >= 0.1.0",
     #"mputils @ file:///D:/mputils",
     "mputils @ git+https://github.com/saycv/mputils@31397737dc9a4a9cb6cd2752955eb06355b90007#egg=mputils",
 ]

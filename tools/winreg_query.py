@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
 import sys
-from regpath import *
 from pathlib import Path as path
+
+from regpath import *
+
 
 def main():
     application_list = []
