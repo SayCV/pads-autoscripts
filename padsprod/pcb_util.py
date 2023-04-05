@@ -4,17 +4,17 @@ import enum
 import functools
 import logging
 import os
-from pathlib import Path as path
 import re
+from pathlib import Path as path
 from string import Template
 
+import toml
 from mputils import *
 
-from padsprod.helper import PADSPROD_ROOT
-
-from padsprod.color_constants import colors
-from padsprod.pcb_constants import *
-import toml
+from .color_constants import colors
+from .exceptions import PadsprodException
+from .helper import PADSPROD_ROOT
+from .pcb_constants import *
 
 logger = logging.getLogger(__name__)
 
@@ -468,7 +468,7 @@ class PCB(object):
             path(self.board_file).parent / f'{_file2}-metadata.toml',
             path(self.board_file).parent / 'metadata.toml',
         ]
-        power_nets = None
+        data = power_nets = None
         for metadata_file in metadata_file_lookup:
             try:
                 data = toml.load(metadata_file)
@@ -476,11 +476,12 @@ class PCB(object):
                 logger.info(f"Try lookup {metadata_file} succeeded.")
                 break
             except Exception as e:
-                logger.debug(f"Try lookup {metadata_file} failed and continue...")
+                logger.debug(f"Try lookup {metadata_file} failed: {e.args[1]}")
                 continue
+        if not data:
+            raise PadsprodException(f"Metadata file non exist raised at {path(__file__).name} line {sys._getframe().f_lineno}")
         if not power_nets:
-            logger.error("Metadata file non exist")
-            raise RuntimeError("Metadata file non exist")
+            raise PadsprodException(f"Metadata file corrupted raised at {path(__file__).name} line {sys._getframe().f_lineno}")
         logger.debug(power_nets)
 
         for net in power_nets:
