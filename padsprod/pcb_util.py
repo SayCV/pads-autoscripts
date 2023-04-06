@@ -447,7 +447,7 @@ class PCB(object):
                 path(self.app.DefaultFilePath) / 'default.pcb')
         self.app.Quit()
 
-    def get_power_nets(self) -> dict:
+    def get_power_nets(self) -> tuple[dict, list]:
         components_power_nets = {}
         #    'n/a': {'top': {
         #        'ttl': [],
@@ -468,11 +468,12 @@ class PCB(object):
             path(self.board_file).parent / f'{_file2}-metadata.toml',
             path(self.board_file).parent / 'metadata.toml',
         ]
-        data = power_nets = None
+        data = power_nets = key_comps = None
         for metadata_file in metadata_file_lookup:
             try:
                 data = toml.load(metadata_file)
                 power_nets = data.get('power_nets')
+                key_comps = data.get('key_comps')
                 logger.info(f"Try lookup {metadata_file} succeeded.")
                 break
             except Exception as e:
@@ -535,7 +536,6 @@ class PCB(object):
                         else:
                             return -1
 
-                    lucky_comp = None
                     for layer in ['top', 'bottom']:
                         if len(power_net_components[layer]['cap']) > 0:
                             caps = power_net_components[layer]['cap'].copy()
@@ -560,7 +560,7 @@ class PCB(object):
                         if power_net_components[layer]['lucky']:
                             logger.debug(f"{layer} = {IPowerPCBComp(power_net_components[layer]['lucky']).Name}")
                     components_power_nets[net_humanize] = power_net_components
-        return components_power_nets
+        return components_power_nets, key_comps
 
     def guess_power_nets(self, net_name):
         re_power_ex1 = r'([+-]*\d+[\.\d]*)V$'
@@ -613,23 +613,56 @@ class PCB(object):
         return vcc
 
     def add_silk_to_power_nets(self):
-        nets = self.get_power_nets()
+        top_silks = []
+        bot_silks = []
+        nets, key_comps = self.get_power_nets()
         for idx, net in enumerate(nets):
-            for layer in ['top', 'bottom']:
-                if nets[net][layer]['lucky']:
-                    lucky_comp = IPowerPCBComp(nets[net][layer]['lucky'])
+            for layer in ['Top', 'Bottom']:
+                if nets[net][layer.lower()]['lucky']:
+                    lucky_comp = IPowerPCBComp(nets[net][layer.lower()]['lucky'])
                     text = str(idx + 1)
                     text_px = lucky_comp.CenterX
                     text_py = lucky_comp.CenterY
                     text_height = 160
                     line_width = 16
-                    layer_name = 'Top' if layer == 'top' else 'Bottom'
-                    mirrored = False if layer == 'top' else True
+                    layer_name = 'Top' if layer == 'Top' else 'Bottom'
+                    mirrored = False if layer == 'Top' else True
                     config = TextConfig(text, text_px, text_py, text_height, line_width, layer_name, mirrored)
                     self.run_add_text(config)
+                    silks_info = f"{lucky_comp.LayerName:16}, {text:2}, {lucky_comp.Name}"
+                    if layer == 'Top':
+                        top_silks.append(silks_info)
+                    else:
+                        bot_silks.append(silks_info)
                 else:
                     logger.info(f"Not found {net} related components in {layer}")
         logger.info(f"Added silk to power nets done.")
+        for idx, key_comp in enumerate(key_comps):
+            lucky_comp = None
+            key_comp_ref = key_comp[0]
+            for _comp in self.board.Components:
+                if _comp.Name == key_comp_ref:
+                    lucky_comp = IPowerPCBComp(_comp)
+                    break
+            if lucky_comp:
+                layer = self.get_layer_name(lucky_comp.layer)
+                text = str(len(nets) + idx + 1)
+                text_px = lucky_comp.CenterX
+                text_py = lucky_comp.CenterY
+                text_height = 160
+                line_width = 16
+                layer_name = 'Top' if layer == 'Top' else 'Bottom'
+                mirrored = False if layer == 'Top' else True
+                config = TextConfig(text, text_px, text_py, text_height, line_width, layer_name, mirrored)
+                self.run_add_text(config)
+                silks_info = f"{lucky_comp.LayerName:16}, {text:2}, {lucky_comp.Name}"
+                if layer == 'Top':
+                    top_silks.append(silks_info)
+                else:
+                    bot_silks.append(silks_info)
+        logger.info(f"Added silk to key components done.")
+        silks_file = path(self.board_file).with_suffix('.silks.txt')
+        silks_file.write_text('\n'.join(top_silks) + '\n\n' + '\n'.join(bot_silks))
 
     def run_add_text(self, config:TextConfig):
         dirname = PADSPROD_ROOT
