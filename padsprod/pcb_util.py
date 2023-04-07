@@ -7,6 +7,7 @@ import os
 import re
 from pathlib import Path as path
 from string import Template
+from typing import Dict, List, Tuple
 
 import toml
 from mputils import *
@@ -468,7 +469,7 @@ class PCB(object):
                 path(self.app.DefaultFilePath) / 'default.pcb')
         self.app.Quit()
 
-    def get_power_nets(self) -> tuple[dict, list]:
+    def get_power_nets(self) -> Tuple[Dict, List]:
         components_power_nets = {}
         #    'n/a': {'top': {
         #        'ttl': [],
