@@ -148,6 +148,9 @@ def run_export(args):
                     pcb.close()
                     return
 
+                if False:
+                    pcb.run_macro_ppcb_export_default_pdf(output)
+
                 pcb.run_macro_ppcb_reset_default_palette()
                 #pcb.run_macro_ppcb_export_pdf(output, 'Top')
                 #pcb.run_macro_ppcb_export_pdf(output, 'Bottom')

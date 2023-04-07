@@ -441,6 +441,27 @@ class PCB(object):
         macro_file = self._config_macro_ppcb_export_pdf(pdf, layer_number)
         self.run_macro(macro_file)
 
+    def run_macro_ppcb_export_default_pdf(self, pdf):
+        dirname = PADSPROD_ROOT
+        origin = mcrPPcbCmdList['PPcbExportPdfMacro']
+        macro_file = path.joinpath(dirname, 'macros', origin)
+        
+        pdf = path.joinpath(pdf.parent, pdf.stem + '-pcb.pdf')
+        # if layer_name.isnumeric():
+        #    layer_number = int(layer_name)
+        # else:
+        #    layer_number = self.get_layer_id(layer_name)
+
+        t = Template(MACRO_OPS_2_1)
+        d = {
+            "pdf_file": pdf,
+            "enable_open_pdf": 'false',
+        }
+        macro_content = t.substitute(d)
+        path.write_text(macro_file, macro_content)
+        self.run_macro(macro_file)
+        logger.status(f'Export to pdf in default configuration.')
+
     def close(self, save=True):
         if save:
             self.board.SaveAsTemp(

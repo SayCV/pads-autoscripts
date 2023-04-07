@@ -22,6 +22,18 @@ PDFConfig.Cancel.Click()
 DlgPrompt.Question("Do you want to save the changes ?").Answer(mbNo)
 """
 
+MACRO_OPS_2_1 = r"""
+Application.ExecuteCommand("PDF Config")
+PDFConfig.OpenPDF = ${enable_open_pdf}
+PDFConfig.Tree.Select("PDF Document\Bottom")
+PDFConfig.MirroImage = true
+PDFConfig.Tree.Select("PDF Document\Assembly Bottom")
+PDFConfig.MirroImage = true
+PDFConfig.Generate.ChooseFile("${pdf_file}")
+PDFConfig.Cancel.Click()
+DlgPrompt.Question("Do you want to save the changes ?").Answer(mbNo)
+"""
+
 MACRO_OPS_3 = r"""
 Application.ExecuteCommand("Pour Manager")
 PourManagerDlg.Tabs = "Flood"
