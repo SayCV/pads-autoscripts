@@ -531,12 +531,12 @@ class PCB(object):
                                 power_net_components[comp.LayerName.lower()][comp.PartTypeLogic.lower()] = []
                             power_net_components[comp.LayerName.lower()][comp.PartTypeLogic.lower()].append(comp)
 
-                    type_alias_name = {'ttl':'ICs', 'res':'resistors', 'cap':'capacitors', 'ind':'inductances'}
+                    type_alias_name = {'ttl':'ICs', 'res':'resistors', 'cap':'capacitors', 'ind':'inductances', 'con':'connectors'}
                     for layer in ['top', 'bottom']:
                         debug_string = f"Net({net_humanize:16}) in {layer[:3]} includes "
                         if not layer in power_net_components:
                             power_net_components[layer] = {}
-                        for type in ['ttl', 'res', 'cap', 'ind']:
+                        for type in ['ttl', 'res', 'cap', 'ind', 'con']:
                             if not type in power_net_components[layer]:
                                 power_net_components[layer][type] = []
                             debug_string += f"{len(power_net_components[layer][type]):3} {type_alias_name[type]},"
@@ -559,7 +559,13 @@ class PCB(object):
                             return -1
 
                     for layer in ['top', 'bottom']:
-                        if len(power_net_components[layer]['cap']) > 0:
+                        if False and len(power_net_components[layer]['con']) > 0:
+                            cons = power_net_components[layer]['con'].copy()
+                            _sorted_cons = sorted(cons, key=functools.cmp_to_key(lucky_comp_sorted))
+                            power_net_components[layer]['con'] = _sorted_cons
+                            power_net_components[layer]['lucky'] = _sorted_cons[0]
+                            pass
+                        elif len(power_net_components[layer]['cap']) > 0:
                             caps = power_net_components[layer]['cap'].copy()
                             _sorted_caps = sorted(caps, key=functools.cmp_to_key(lucky_comp_sorted))
                             power_net_components[layer]['cap'] = _sorted_caps
