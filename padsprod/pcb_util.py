@@ -5,6 +5,8 @@ import functools
 import logging
 import os
 import re
+import win32gui as wg
+import win32con
 from pathlib import Path as path
 from string import Template
 from typing import Dict, List, Tuple
@@ -175,7 +177,6 @@ class TextConfig(object):
     def set_mirrored(self, mirrored):
         self.mirrored = mirrored,
 
-
 class PCB(object):
     def __init__(self, args, board_file, visible):
         macro_dir = path.joinpath(PADSPROD_ROOT, 'macros')
@@ -188,8 +189,9 @@ class PCB(object):
         self.name = os.path.splitext(os.path.basename(board_file))[0]
         self.mputils = mputils()
         self.app = self.mputils.PADSPCBApplication()
-        self.app.Visible = visible
+        self.app.Visible = True
         self.board = IPowerPCBDoc(self.app.OpenDocument(board_file))
+        self.board.unit = strPPcbUnit['Mils']
         self.layers = self.board.Layers
         self.added_pwrsilk = False
 
@@ -201,6 +203,41 @@ class PCB(object):
         if self.board.Name == 'default.pcb' and not self.board.Name == board_file.name:
             logger.warning("No input file found")
             pass
+
+        self.dic_hwnd_title = {}
+        self.hwnd = self.found_this_hwnd()
+        if self.hwnd:
+            wg.ShowWindow( self.hwnd, win32con.SW_MAXIMIZE )
+            logger.debug("Set Window MAXIMIZE done.")
+            pass
+        self.set_view_extents_to_board()
+        self.view_top_left_mils, self.view_bot_right_mils = self.get_board_view_size()
+        #self.app.Visible = visible
+
+    def found_this_hwnd(self):
+        wg.EnumWindows(self.get_all_hwnd, 0)
+
+        pads_instance = None
+        title = f"{self.board_file} - PADS Layout"
+        #logger.debug(title)
+        for _, v in enumerate(self.dic_hwnd_title.items()):
+            if v[1] == '':
+                continue
+            #else:
+            #    logger.debug(v[1])
+            if 'PADS Layout' in v[1] and f"{self.board_file.name}" in v[1]: # v[1].__eq__(title)
+                pads_instance = v[0]
+                break
+        if not pads_instance:
+            logger.debug("Not found the hWnd.")
+        return pads_instance
+
+    def get_all_hwnd(self, hwnd, mouse):
+        # list all window
+        if (wg.IsWindow(hwnd)
+                and wg.IsWindowEnabled(hwnd)
+                ): # and wg.IsWindowVisible(hwnd)
+            self.dic_hwnd_title.update({hwnd: wg.GetWindowText(hwnd)})
 
     def info(self):
         logger.info(
@@ -223,14 +260,21 @@ class PCB(object):
             f'Board layers: Total {self.layers.Count}, includes {metal_layers_count} metal, {diele_layers_count} dielectric')
         _key = list(strPPcbUnit.keys())[
             list(strPPcbUnit.values()).index(self.board.unit)]
-        print(f'Board Thickness: {pcb_thick:.2f} {_key}')
+        print(f'Board Thickness: {pcb_thick:.2f} {_key}, {pcb_thick * 0.0254:.2f} mm')
         print(
             f'Board Origin Point: px={self.board.OriginX}, py={self.board.OriginY}')
-        old_unit = self.board.unit
-        self.board.unit = strPPcbUnit['Metric']
-        dBoardSize = self.board.BoardOutlineSurface
-        print(f"Board Size: {dBoardSize: .2f} mm²")
-        self.board.unit = old_unit
+        #old_unit = self.board.unit
+        #self.board.unit = strPPcbUnit['Metric']
+        #self.board.unit = old_unit
+        brd_width_mils = self.view_bot_right_mils[0] - self.view_top_left_mils[0]
+        brd_depth_mils = self.view_top_left_mils[1] - self.view_bot_right_mils[1]
+        brd_height_mils = pcb_thick
+        print(f"Board Size(W x D x H): {brd_width_mils * 0.0254: .2f} mm x {brd_depth_mils * 0.0254: .2f} mm x {brd_height_mils * 0.0254: .2f} mm")
+
+        brd_cal_size = brd_width_mils * 0.0254 * brd_depth_mils * 0.0254
+        brd_real_size = self.board.BoardOutlineSurface * 0.0254 * 0.0254
+        compare_str = '>' if brd_real_size > brd_cal_size else '<' if brd_real_size < brd_cal_size else '='
+        print(f"Board surface size: {brd_real_size: .2f} mm² {compare_str} calculated view size {brd_cal_size: .2f} mm²")
         pass
 
     def set_visible(self, visible):
@@ -340,6 +384,37 @@ class PCB(object):
 
         self.run_macro(macro_file)
 
+    def set_view_extents_to_board(self) -> IPowerPCBView:
+        view = IPowerPCBView(self.board.ActiveView)
+        view.SetExtentsToBoard()
+        return view
+
+    def get_board_view_size(self) -> tuple[tuple, tuple]:
+        view = self.set_view_extents_to_board()
+        top_left = (view.TopLeftX, view.TopLeftY)
+        bot_right = (view.BottomRightX, view.BottomRightY)
+        return (top_left, bot_right)
+
+    def remove_board_outside_keepouts(self):
+        #for _drawing in self.board.Drawings:
+        #    drawing = IPowerPCBDrawing(_drawing)
+        #    if drawing.DrawingType == ppcbDrwBoard:
+        #        break
+        #    pass
+        for _drawing in self.board.Drawings:
+            drawing = IPowerPCBDrawing(_drawing)
+            if drawing.DrawingType == ppcbDrwKeepout:
+                logger.debug(f"Found Keepout: {drawing.Name}")
+                if_del = False
+                if drawing.PositionX < self.view_top_left_mils[0] or drawing.PositionX > self.view_bot_right_mils[0]:
+                    if_del = True
+                elif drawing.PositionY < self.view_bot_right_mils[1] or drawing.PositionY > self.view_top_left_mils[1]:
+                    if_del = True
+                if if_del:
+                    drawing.selected = if_del
+                    pass
+            pass
+
     def run_macro(self, macro_file):
         dirname = PADSPROD_ROOT
         file = path.joinpath(dirname, 'macros', macro_file)
@@ -427,6 +502,8 @@ class PCB(object):
         logger.status(f'Export to pdf from {layer_name} layer.')
         self.set_layer_color_by_id(layer_number, color_idxs)
 
+        self.remove_board_outside_keepouts()
+
         if not self.args.disable_pwrsilk and not self.added_pwrsilk:
             # self.set_layer_color_by_id(layer_number, color_idxs)
             #layer = self.get_layer_by_name('Top')
@@ -484,7 +561,7 @@ class PCB(object):
         #    }, }
 
         _fields = path(self.board_file).stem.split('-')
-        _file2 = _fields[:2] if len(_fields) > 2 else None
+        _file2 = '-'.join(_fields[:2]) if len(_fields) > 2 else None
         metadata_file_lookup = [
             path(self.board_file).with_suffix('.metadata.toml'),
             path(self.board_file).parent / f'{_file2}-metadata.toml',
@@ -501,10 +578,9 @@ class PCB(object):
             except Exception as e:
                 logger.debug(f"Try lookup {metadata_file} failed: {e.args[1]}")
                 continue
-        if not data:
-            raise PadsprodException(f"Metadata file non exist raised at {path(__file__).name} line {sys._getframe().f_lineno}")
-        if not power_nets:
-            raise PadsprodException(f"Metadata file corrupted raised at {path(__file__).name} line {sys._getframe().f_lineno}")
+        if not data or not power_nets:
+            #raise PadsprodException(f"Metadata file corrupted raised at {path(__file__).name} line {sys._getframe().f_lineno}")
+            return ({}, [])
         logger.debug(power_nets)
 
         for net in power_nets:
