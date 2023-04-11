@@ -5,13 +5,13 @@ import functools
 import logging
 import os
 import re
-import win32gui as wg
-import win32con
 from pathlib import Path as path
 from string import Template
 from typing import Dict, List, Tuple
 
 import toml
+import win32con
+import win32gui as wg
 from mputils import *
 
 from .color_constants import colors
@@ -130,6 +130,7 @@ mcrPPcbCmdList = {
     "PPcbPourMangerMacro": "Macro3.mcr",
     "PPcbExportHypMacro": "Macro4.mcr",
     "PPcbDraftingText": "Macro5.mcr",
+    "PPcbDeleteSelected": "Macro6.mcr",
 }
 
 
@@ -212,7 +213,7 @@ class PCB(object):
             pass
         self.set_view_extents_to_board()
         self.view_top_left_mils, self.view_bot_right_mils = self.get_board_view_size()
-        #self.app.Visible = visible
+        self.app.Visible = visible
 
     def found_this_hwnd(self):
         wg.EnumWindows(self.get_all_hwnd, 0)
@@ -389,22 +390,28 @@ class PCB(object):
         view.SetExtentsToBoard()
         return view
 
-    def get_board_view_size(self) -> tuple[tuple, tuple]:
+    def get_board_view_size(self) -> Tuple[tuple, tuple]:
         view = self.set_view_extents_to_board()
         top_left = (view.TopLeftX, view.TopLeftY)
         bot_right = (view.BottomRightX, view.BottomRightY)
         return (top_left, bot_right)
 
     def remove_board_outside_keepouts(self):
+        keepout_type_start = False
+        type_count = 0
+        keepout_type_count = 0
         #for _drawing in self.board.Drawings:
         #    drawing = IPowerPCBDrawing(_drawing)
         #    if drawing.DrawingType == ppcbDrwBoard:
         #        break
         #    pass
+        logger.debug(f"Found Drawings: {len(self.board.Drawings)}")
         for _drawing in self.board.Drawings:
+            type_count += 1
             drawing = IPowerPCBDrawing(_drawing)
             if drawing.DrawingType == ppcbDrwKeepout:
-                logger.debug(f"Found Keepout: {drawing.Name}")
+                keepout_type_count += 1
+                keepout_type_start = True
                 if_del = False
                 if drawing.PositionX < self.view_top_left_mils[0] or drawing.PositionX > self.view_bot_right_mils[0]:
                     if_del = True
@@ -412,13 +419,30 @@ class PCB(object):
                     if_del = True
                 if if_del:
                     drawing.selected = if_del
-                    pass
+                logger.debug(f"Found Keepout {keepout_type_count} in {type_count}: {drawing.Name} selected = {if_del}")
+            else:
+                if type_count > 50:
+                    break
             pass
+        # delete selected obj
+        self.run_macro_ppcb_delete_selected()
 
     def run_macro(self, macro_file):
         dirname = PADSPROD_ROOT
         file = path.joinpath(dirname, 'macros', macro_file)
         self.app.RunMacro(file, 'Macro1')
+
+    def run_macro_ppcb_delete_selected(self):
+        dirname = PADSPROD_ROOT
+        origin = mcrPPcbCmdList['PPcbDeleteSelected']
+        macro_file = path.joinpath(dirname, 'macros', origin)
+
+        t = Template(MACRO_OPS_6)
+        d = {}
+        macro_content = t.substitute(d)
+        path.write_text(macro_file, macro_content)
+
+        self.run_macro(macro_file)
 
     def run_macro_ppcb_reset_default_palette(self):
         dirname = PADSPROD_ROOT
@@ -720,11 +744,39 @@ class PCB(object):
         top_silks = []
         bot_silks = []
         nets, key_comps = self.get_power_nets()
-        for idx, net in enumerate(nets):
-            for layer in ['Top', 'Bottom']:
-                if nets[net][layer.lower()]['lucky']:
-                    lucky_comp = IPowerPCBComp(nets[net][layer.lower()]['lucky'])
-                    text = str(idx + 1)
+        if nets:
+            for idx, net in enumerate(nets):
+                for layer in ['Top', 'Bottom']:
+                    if nets[net][layer.lower()]['lucky']:
+                        lucky_comp = IPowerPCBComp(nets[net][layer.lower()]['lucky'])
+                        text = str(idx + 1)
+                        text_px = lucky_comp.CenterX
+                        text_py = lucky_comp.CenterY
+                        text_height = 160
+                        line_width = 16
+                        layer_name = 'Top' if layer == 'Top' else 'Bottom'
+                        mirrored = False if layer == 'Top' else True
+                        config = TextConfig(text, text_px, text_py, text_height, line_width, layer_name, mirrored)
+                        self.run_add_text(config)
+                        silks_info = f"{lucky_comp.LayerName:16}, {text:2}, {lucky_comp.Name}"
+                        if layer == 'Top':
+                            top_silks.append(silks_info)
+                        else:
+                            bot_silks.append(silks_info)
+                    else:
+                        logger.info(f"Not found {net} related components in {layer}")
+            logger.info(f"Added silk to power nets done.")
+        if key_comps:
+            for idx, key_comp in enumerate(key_comps):
+                lucky_comp = None
+                key_comp_ref = key_comp[0]
+                for _comp in self.board.Components:
+                    if _comp.Name == key_comp_ref:
+                        lucky_comp = IPowerPCBComp(_comp)
+                        break
+                if lucky_comp:
+                    layer = self.get_layer_name(lucky_comp.layer)
+                    text = str(len(nets) + idx + 1)
                     text_px = lucky_comp.CenterX
                     text_py = lucky_comp.CenterY
                     text_height = 160
@@ -738,32 +790,6 @@ class PCB(object):
                         top_silks.append(silks_info)
                     else:
                         bot_silks.append(silks_info)
-                else:
-                    logger.info(f"Not found {net} related components in {layer}")
-        logger.info(f"Added silk to power nets done.")
-        for idx, key_comp in enumerate(key_comps):
-            lucky_comp = None
-            key_comp_ref = key_comp[0]
-            for _comp in self.board.Components:
-                if _comp.Name == key_comp_ref:
-                    lucky_comp = IPowerPCBComp(_comp)
-                    break
-            if lucky_comp:
-                layer = self.get_layer_name(lucky_comp.layer)
-                text = str(len(nets) + idx + 1)
-                text_px = lucky_comp.CenterX
-                text_py = lucky_comp.CenterY
-                text_height = 160
-                line_width = 16
-                layer_name = 'Top' if layer == 'Top' else 'Bottom'
-                mirrored = False if layer == 'Top' else True
-                config = TextConfig(text, text_px, text_py, text_height, line_width, layer_name, mirrored)
-                self.run_add_text(config)
-                silks_info = f"{lucky_comp.LayerName:16}, {text:2}, {lucky_comp.Name}"
-                if layer == 'Top':
-                    top_silks.append(silks_info)
-                else:
-                    bot_silks.append(silks_info)
         logger.info(f"Added silk to key components done.")
         silks_file = path(self.board_file).with_suffix('.silks.txt')
         silks_file.write_text('\n'.join(top_silks) + '\n\n' + '\n'.join(bot_silks))

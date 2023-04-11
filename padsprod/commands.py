@@ -4,9 +4,11 @@
 
 import logging
 import sys
+import traceback
 from pathlib import Path as path
 
 from . import hyp_util, pcb_util, sch_util
+from .exceptions import PadsprodException
 
 logger = logging.getLogger(__name__)
 
@@ -163,6 +165,7 @@ def run_export(args):
                     pcb.run_macro_ppcb_export_pdf(output, args.layer)
             except Exception as e:
                 logger.error(e)
+                traceback.print_exc()
             pcb.close()
         elif out_format == 'asc':
             board_file = input

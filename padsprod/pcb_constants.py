@@ -63,3 +63,7 @@ AddFreeTextDlg.Mirrored = ${mirrored}
 AddFreeTextDlg.Ok.Click()
 AddFreeTextDlg.Cancel.Click()
 """
+
+MACRO_OPS_6 = r"""
+Application.ExecuteCommand("Edit Delete Group")
+"""
