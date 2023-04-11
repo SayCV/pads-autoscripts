@@ -215,6 +215,8 @@ class PCB(object):
         self.view_top_left_mils, self.view_bot_right_mils = self.get_board_view_size()
         self.app.Visible = visible
 
+        self.remove_board_outside_keepouts()
+
     def found_this_hwnd(self):
         wg.EnumWindows(self.get_all_hwnd, 0)
 
@@ -526,7 +528,6 @@ class PCB(object):
         logger.status(f'Export to pdf from {layer_name} layer.')
         self.set_layer_color_by_id(layer_number, color_idxs)
 
-        self.remove_board_outside_keepouts()
 
         if not self.args.disable_pwrsilk and not self.added_pwrsilk:
             # self.set_layer_color_by_id(layer_number, color_idxs)
