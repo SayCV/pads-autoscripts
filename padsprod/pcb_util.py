@@ -866,7 +866,7 @@ class PCB(object):
                     config = TextConfig(
                         text, text_px, text_py, text_height, line_width, layer_name, mirrored)
                     self.run_add_text(config)
-                    silks_info = f"{lucky_comp.LayerName:16}, {text:2}, {lucky_comp.Name}"
+                    silks_info = f"{lucky_comp.LayerName:16}, {text:2} -> {lucky_comp.Name}"
                     if layer == 'Top':
                         top_silks.append(silks_info)
                     else:
