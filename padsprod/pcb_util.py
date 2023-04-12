@@ -595,7 +595,6 @@ class PCB(object):
                     color_idx = PPcbDefaultPaletteColorList.get_idx('red')
             color_idxs.append(color_idx)
 
-        logger.status(f'Export to pdf from {layer_name} layer.')
         self.set_layer_color_by_id(layer_number, color_idxs)
 
         if not self.args.disable_pwrsilk and not self.added_pwrsilk:
@@ -612,6 +611,10 @@ class PCB(object):
 
         macro_file = self._config_macro_ppcb_export_pdf(pdf, layer_number)
         self.run_macro(macro_file)
+
+        _name = bytes(layer_name, encoding='raw_unicode_escape')
+        _name = _name.decode('gbk')
+        logger.status(f'Exported to pdf from {_name} layer.')
 
     def run_macro_ppcb_export_default_pdf(self, pdf):
         dirname = PADSPROD_ROOT

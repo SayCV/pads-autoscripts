@@ -263,10 +263,13 @@ class SCH(object):
             #    color_idx = PLogDefaultPaletteColorList.get_idx('white')
             color_idxs.append(color_idx)
 
-        logger.status(f'Export to pdf from {sheet_name} sheet.')
         #self.set_obj_color_by_name(page, color_idxs)
         macro_file = self._config_macro_plog_export_pdf(pdf, page)
         self.run_macro(macro_file)
+
+        _name = bytes(sheet_name, encoding='raw_unicode_escape')
+        _name = _name.decode('gbk')
+        logger.status(f'Export to pdf from {_name} sheet.')
 
     def save_as(self, file):
         self.board.SaveAs(file)
