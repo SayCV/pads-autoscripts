@@ -837,7 +837,7 @@ class PCB(object):
                         config = TextConfig(
                             text, text_px, text_py, text_height, line_width, layer_name, mirrored)
                         self.run_add_text(config)
-                        silks_info = f"{lucky_comp.LayerName:16}, {text:2}, {lucky_comp.Name}"
+                        silks_info = f"{lucky_comp.LayerName:16}, {text:2} -> {lucky_comp.Name}"
                         if layer == 'Top':
                             top_silks.append(silks_info)
                         else:
@@ -872,9 +872,10 @@ class PCB(object):
                     else:
                         bot_silks.append(silks_info)
         logger.info(f"Added silk to key components done.")
-        silks_file = path(self.board_file).with_suffix('.silks.txt')
-        silks_file.write_text('\n'.join(top_silks) +
-                              '\n\n' + '\n'.join(bot_silks))
+        if len(top_silks) > 0 or len(bot_silks) > 0:
+            silks_file = path(self.board_file).with_suffix('.silks.txt')
+            silks_file.write_text('\n'.join(top_silks) +
+                                '\n\n' + '\n'.join(bot_silks))
 
     def run_add_text(self, config: TextConfig):
         dirname = PADSPROD_ROOT
