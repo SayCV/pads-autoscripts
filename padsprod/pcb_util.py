@@ -149,6 +149,7 @@ class Layer(object):
     def get_name(self):
         return self.pcb.get_layer_name(self.layer_id)
 
+
 class TextConfig(object):
     def __init__(self, text='', text_px=0.0, text_py=0.0, text_height=0.0, line_width=0.0, layer_name='', mirrored=False):
         self.text = text
@@ -178,6 +179,7 @@ class TextConfig(object):
     def set_mirrored(self, mirrored):
         self.mirrored = mirrored,
 
+
 class PCB(object):
     def __init__(self, args, board_file, visible):
         macro_dir = path.joinpath(PADSPROD_ROOT, 'macros')
@@ -196,6 +198,14 @@ class PCB(object):
         self.layers = self.board.Layers
         self.added_pwrsilk = False
 
+        self.brd_size_width = 0.0
+        self.brd_size_depth = 0.0
+        self.brd_size_height = 0.0
+
+        self.brd_view_size_width = 0.0
+        self.brd_view_size_depth = 0.0
+        self.brd_view_size_height = 0.0
+
         self.app.StatusBarText = 'Running in python: ' + \
             str(datetime.datetime.now())
         logger.status(f"{self.app.StatusBarText}")
@@ -208,27 +218,28 @@ class PCB(object):
         self.dic_hwnd_title = {}
         self.hwnd = self.found_this_hwnd()
         if self.hwnd:
-            wg.ShowWindow( self.hwnd, win32con.SW_MAXIMIZE )
+            wg.ShowWindow(self.hwnd, win32con.SW_MAXIMIZE)
             logger.debug("Set Window MAXIMIZE done.")
             pass
         self.set_view_extents_to_board()
         self.view_top_left_mils, self.view_bot_right_mils = self.get_board_view_size()
         self.app.Visible = visible
-
-        self.remove_board_outside_keepouts()
+        self.brd_view_size_height = self.get_pcb_thick()
+        self.get_board_dim_size()
 
     def found_this_hwnd(self):
         wg.EnumWindows(self.get_all_hwnd, 0)
 
         pads_instance = None
         title = f"{self.board_file} - PADS Layout"
-        #logger.debug(title)
+        # logger.debug(title)
         for _, v in enumerate(self.dic_hwnd_title.items()):
             if v[1] == '':
                 continue
-            #else:
+            # else:
             #    logger.debug(v[1])
-            if 'PADS Layout' in v[1] and f"{self.board_file.name}" in v[1]: # v[1].__eq__(title)
+            # v[1].__eq__(title)
+            if 'PADS Layout' in v[1] and f"{self.board_file.name}" in v[1]:
                 pads_instance = v[0]
                 break
         if not pads_instance:
@@ -238,14 +249,11 @@ class PCB(object):
     def get_all_hwnd(self, hwnd, mouse):
         # list all window
         if (wg.IsWindow(hwnd)
-                and wg.IsWindowEnabled(hwnd)
-                ): # and wg.IsWindowVisible(hwnd)
+            and wg.IsWindowEnabled(hwnd)
+            ): # and wg.IsWindowVisible(hwnd)
             self.dic_hwnd_title.update({hwnd: wg.GetWindowText(hwnd)})
 
-    def info(self):
-        logger.info(
-            f'This PCB file includes Components: {self.board.Components.Count}, Layers: {self.board.ElectricalLayerCount}')
-        print('Board Stackup:')
+    def get_pcb_thick(self):
 
         metal_layers_count = 0
         diele_layers_count = 0
@@ -261,23 +269,40 @@ class PCB(object):
             pcb_thick += layer.GetDielectricThickness(ppcbDielectricLayerAbove)
         print(
             f'Board layers: Total {self.layers.Count}, includes {metal_layers_count} metal, {diele_layers_count} dielectric')
+        return (pcb_thick)
+
+    def info(self):
+        logger.info(
+            f'This PCB file includes Components: {self.board.Components.Count}, Layers: {self.board.ElectricalLayerCount}')
+        print('Board Stackup:')
+        pcb_thick = self.brd_view_size_height
+
         _key = list(strPPcbUnit.keys())[
             list(strPPcbUnit.values()).index(self.board.unit)]
-        print(f'Board Thickness: {pcb_thick:.2f} {_key}, {pcb_thick * 0.0254:.2f} mm')
+        print(
+            f'Board Thickness: {pcb_thick:.2f} {_key}, {pcb_thick * 0.0254:.2f} mm')
         print(
             f'Board Origin Point: px={self.board.OriginX}, py={self.board.OriginY}')
         #old_unit = self.board.unit
         #self.board.unit = strPPcbUnit['Metric']
         #self.board.unit = old_unit
-        brd_width_mils = self.view_bot_right_mils[0] - self.view_top_left_mils[0]
-        brd_depth_mils = self.view_top_left_mils[1] - self.view_bot_right_mils[1]
-        brd_height_mils = pcb_thick
-        print(f"Board Size(W x D x H): {brd_width_mils * 0.0254: .2f} mm x {brd_depth_mils * 0.0254: .2f} mm x {brd_height_mils * 0.0254: .2f} mm")
 
-        brd_cal_size = brd_width_mils * 0.0254 * brd_depth_mils * 0.0254
+        print(
+            f"Board View Size(W x D x H): {self.brd_view_size_width * 0.0254: .2f} mm x {self.brd_view_size_depth * 0.0254: .2f} mm x {self.brd_view_size_height * 0.0254: .2f} mm")
+
+        print(
+            f"Board Dim  Size(W x D x H): {self.brd_size_width * 0.0254: .2f} mm x {self.brd_size_depth * 0.0254: .2f} mm x {self.brd_size_height * 0.0254: .2f} mm")
+
+        brd_dim_size = self.brd_size_width * 0.0254 * self.brd_size_depth * 0.0254
+        brd_cal_size = self.brd_view_size_width * 0.0254 * self.brd_view_size_depth * 0.0254
         brd_real_size = self.board.BoardOutlineSurface * 0.0254 * 0.0254
         compare_str = '>' if brd_real_size > brd_cal_size else '<' if brd_real_size < brd_cal_size else '='
-        print(f"Board surface size: {brd_real_size: .2f} mm² {compare_str} calculated view size {brd_cal_size: .2f} mm²")
+        print(
+            f"Board view surface size: {brd_real_size: .2f} mm² {compare_str} calculated view size {brd_cal_size: .2f} mm²")
+
+        print(
+            f"Board dim  surface size: {brd_dim_size: .2f} mm²")
+
         pass
 
     def set_visible(self, visible):
@@ -396,17 +421,18 @@ class PCB(object):
         view = self.set_view_extents_to_board()
         top_left = (view.TopLeftX, view.TopLeftY)
         bot_right = (view.BottomRightX, view.BottomRightY)
+
+        self.brd_view_size_width = view.BottomRightX - view.TopLeftX
+        self.brd_view_size_depth = view.TopLeftY - view.BottomRightY
+
         return (top_left, bot_right)
 
-    def remove_board_outside_keepouts(self):
+    def get_board_dim_size(self, remove_board_outside_keepouts=True):
         keepout_type_start = False
         type_count = 0
         keepout_type_count = 0
-        #for _drawing in self.board.Drawings:
-        #    drawing = IPowerPCBDrawing(_drawing)
-        #    if drawing.DrawingType == ppcbDrwBoard:
-        #        break
-        #    pass
+        drawing_dim = []
+
         logger.debug(f"Found Drawings: {len(self.board.Drawings)}")
         for _drawing in self.board.Drawings:
             type_count += 1
@@ -421,13 +447,55 @@ class PCB(object):
                     if_del = True
                 if if_del:
                     drawing.selected = if_del
-                logger.debug(f"Found Keepout {keepout_type_count} in {type_count}: {drawing.Name} selected = {if_del}")
+                logger.debug(
+                    f"Found Keepout {keepout_type_count} in {type_count}: {drawing.Name} selected = {if_del}")
             else:
-                if type_count > 50:
+                if drawing.DrawingType == ppcbDrwBoard:
+                    logger.debug(f"Found BoardOutline in {type_count}: {drawing.Name}")
+                elif drawing.DrawingType == ppcbDrw2Dline:
+                    if drawing.Name.startswith('DIM'):
+                        texts = drawing.Texts
+                        text = texts[0].text
+                        drawing_dim.append(text)
+                    logger.debug(f"Found 2DLine in {type_count}: {drawing.Name}: {drawing.PositionX}, {drawing.PositionY}")
+                if type_count > 100:
+                    # save time
                     break
             pass
+        logger.debug(f"This PCB file includes 2DLine for DIM: {drawing_dim}")
+        def drawing_dim_sorted(a, b):
+            a = self.get_size_in_mil(a)
+            b = self.get_size_in_mil(b)
+            if a > b:
+                return -1
+            else:
+                return 1
+        drawing_dim = sorted(drawing_dim, key=functools.cmp_to_key(drawing_dim_sorted))
+        if len(drawing_dim) > 2:
+            if self.brd_view_size_width > self.brd_view_size_depth:
+                self.brd_size_width  = self.get_size_in_mil(drawing_dim[0])
+                self.brd_size_depth  = self.get_size_in_mil(drawing_dim[1])
+                self.brd_size_height = self.get_size_in_mil(drawing_dim[2])
+            else:
+                self.brd_size_width  = self.get_size_in_mil(drawing_dim[1])
+                self.brd_size_depth  = self.get_size_in_mil(drawing_dim[0])
+                self.brd_size_height = self.get_size_in_mil(drawing_dim[2])
         # delete selected obj
-        self.run_macro_ppcb_delete_selected()
+        if remove_board_outside_keepouts:
+            self.run_macro_ppcb_delete_selected()
+
+    def get_size_in_mil(self, size):
+        pattern = re.compile(r'([\d.]+)([a-zA-Z])')
+        matched = pattern.match(size)
+        _size = 0
+        if matched:
+            _size = float(matched.group(1))
+            _unit = matched.group(2)
+            if _unit in 'mm':
+                _size = _size / 0.0254
+            elif _unit in 'inch':
+                _size = _size / 25.4
+        return _size
 
     def run_macro(self, macro_file):
         dirname = PADSPROD_ROOT
@@ -528,7 +596,6 @@ class PCB(object):
         logger.status(f'Export to pdf from {layer_name} layer.')
         self.set_layer_color_by_id(layer_number, color_idxs)
 
-
         if not self.args.disable_pwrsilk and not self.added_pwrsilk:
             # self.set_layer_color_by_id(layer_number, color_idxs)
             #layer = self.get_layer_by_name('Top')
@@ -536,9 +603,9 @@ class PCB(object):
             self.add_silk_to_power_nets()
             self.added_pwrsilk = True
         # No affect
-        #if layer_name == 'Top' and not self.args.disable_pwrsilk:
+        # if layer_name == 'Top' and not self.args.disable_pwrsilk:
         #    self.board.ActiveLayer = self.get_layer_id('Silkscreen Top')
-        #if layer_name == 'Bottom' and not self.args.disable_pwrsilk:
+        # if layer_name == 'Bottom' and not self.args.disable_pwrsilk:
         #    self.board.ActiveLayer = self.get_layer_id('Silkscreen Bottom')
 
         macro_file = self._config_macro_ppcb_export_pdf(pdf, layer_number)
@@ -548,7 +615,7 @@ class PCB(object):
         dirname = PADSPROD_ROOT
         origin = mcrPPcbCmdList['PPcbExportPdfMacro']
         macro_file = path.joinpath(dirname, 'macros', origin)
-        
+
         pdf = path.joinpath(pdf.parent, pdf.stem + '-pcb.pdf')
         # if layer_name.isnumeric():
         #    layer_number = int(layer_name)
@@ -627,12 +694,16 @@ class PCB(object):
                         # print(comp.PartTypeLogic)
                         if comp.LayerName in 'Top' or comp.LayerName in 'Bottom':
                             if not comp.LayerName.lower() in power_net_components:
-                                power_net_components[comp.LayerName.lower()] = {}
+                                power_net_components[comp.LayerName.lower()] = {
+                                }
                             if not comp.PartTypeLogic.lower() in power_net_components[comp.LayerName.lower()]:
-                                power_net_components[comp.LayerName.lower()][comp.PartTypeLogic.lower()] = []
-                            power_net_components[comp.LayerName.lower()][comp.PartTypeLogic.lower()].append(comp)
+                                power_net_components[comp.LayerName.lower(
+                                )][comp.PartTypeLogic.lower()] = []
+                            power_net_components[comp.LayerName.lower(
+                            )][comp.PartTypeLogic.lower()].append(comp)
 
-                    type_alias_name = {'ttl':'ICs', 'res':'resistors', 'cap':'capacitors', 'ind':'inductances', 'con':'connectors'}
+                    type_alias_name = {'ttl': 'ICs', 'res': 'resistors',
+                                       'cap': 'capacitors', 'ind': 'inductances', 'con': 'connectors'}
                     for layer in ['top', 'bottom']:
                         debug_string = f"Net({net_humanize:16}) in {layer[:3]} includes "
                         if not layer in power_net_components:
@@ -649,45 +720,50 @@ class PCB(object):
 
                         pattern = re.compile(r'[A-Za-z]+(\d+)')
                         matched = pattern.match(a.Decal)
-                        #print(matched.groups())
+                        # print(matched.groups())
                         a_fp = matched.group(1) if matched else 0
                         matched = pattern.match(b.Decal)
                         b_fp = matched.group(1) if matched else 0
 
                         if int(a_fp) < int(b_fp):
-                            return 1 # b, a
+                            return 1  # b, a
                         else:
                             return -1
 
                     for layer in ['top', 'bottom']:
                         if False and len(power_net_components[layer]['con']) > 0:
                             cons = power_net_components[layer]['con'].copy()
-                            _sorted_cons = sorted(cons, key=functools.cmp_to_key(lucky_comp_sorted))
+                            _sorted_cons = sorted(
+                                cons, key=functools.cmp_to_key(lucky_comp_sorted))
                             power_net_components[layer]['con'] = _sorted_cons
                             power_net_components[layer]['lucky'] = _sorted_cons[0]
                             pass
                         elif len(power_net_components[layer]['cap']) > 0:
                             caps = power_net_components[layer]['cap'].copy()
-                            _sorted_caps = sorted(caps, key=functools.cmp_to_key(lucky_comp_sorted))
+                            _sorted_caps = sorted(
+                                caps, key=functools.cmp_to_key(lucky_comp_sorted))
                             power_net_components[layer]['cap'] = _sorted_caps
                             power_net_components[layer]['lucky'] = _sorted_caps[0]
                             pass
                         elif len(power_net_components[layer]['ind']) > 0:
                             inds = power_net_components[layer]['ind']
-                            _sorted_inds = sorted(inds, key=functools.cmp_to_key(lucky_comp_sorted))
+                            _sorted_inds = sorted(
+                                inds, key=functools.cmp_to_key(lucky_comp_sorted))
                             power_net_components[layer]['ind'] = _sorted_inds
                             power_net_components[layer]['lucky'] = _sorted_inds[0]
                             pass
                         elif len(power_net_components[layer]['res']) > 0:
                             ress = power_net_components[layer]['res']
-                            _sorted_ress = sorted(ress, key=functools.cmp_to_key(lucky_comp_sorted))
+                            _sorted_ress = sorted(
+                                ress, key=functools.cmp_to_key(lucky_comp_sorted))
                             power_net_components[layer]['res'] = _sorted_ress
                             power_net_components[layer]['lucky'] = _sorted_ress[0]
                             pass
                         else:
                             power_net_components[layer]['lucky'] = None
                         if power_net_components[layer]['lucky']:
-                            logger.debug(f"{layer} = {IPowerPCBComp(power_net_components[layer]['lucky']).Name}")
+                            logger.debug(
+                                f"{layer} = {IPowerPCBComp(power_net_components[layer]['lucky']).Name}")
                     components_power_nets[net_humanize] = power_net_components
         return components_power_nets, key_comps
 
@@ -749,7 +825,8 @@ class PCB(object):
             for idx, net in enumerate(nets):
                 for layer in ['Top', 'Bottom']:
                     if nets[net][layer.lower()]['lucky']:
-                        lucky_comp = IPowerPCBComp(nets[net][layer.lower()]['lucky'])
+                        lucky_comp = IPowerPCBComp(
+                            nets[net][layer.lower()]['lucky'])
                         text = str(idx + 1)
                         text_px = lucky_comp.CenterX
                         text_py = lucky_comp.CenterY
@@ -757,7 +834,8 @@ class PCB(object):
                         line_width = 16
                         layer_name = 'Top' if layer == 'Top' else 'Bottom'
                         mirrored = False if layer == 'Top' else True
-                        config = TextConfig(text, text_px, text_py, text_height, line_width, layer_name, mirrored)
+                        config = TextConfig(
+                            text, text_px, text_py, text_height, line_width, layer_name, mirrored)
                         self.run_add_text(config)
                         silks_info = f"{lucky_comp.LayerName:16}, {text:2}, {lucky_comp.Name}"
                         if layer == 'Top':
@@ -765,7 +843,8 @@ class PCB(object):
                         else:
                             bot_silks.append(silks_info)
                     else:
-                        logger.info(f"Not found {net} related components in {layer}")
+                        logger.info(
+                            f"Not found {net} related components in {layer}")
             logger.info(f"Added silk to power nets done.")
         if key_comps:
             for idx, key_comp in enumerate(key_comps):
@@ -784,7 +863,8 @@ class PCB(object):
                     line_width = 16
                     layer_name = 'Top' if layer == 'Top' else 'Bottom'
                     mirrored = False if layer == 'Top' else True
-                    config = TextConfig(text, text_px, text_py, text_height, line_width, layer_name, mirrored)
+                    config = TextConfig(
+                        text, text_px, text_py, text_height, line_width, layer_name, mirrored)
                     self.run_add_text(config)
                     silks_info = f"{lucky_comp.LayerName:16}, {text:2}, {lucky_comp.Name}"
                     if layer == 'Top':
@@ -793,9 +873,10 @@ class PCB(object):
                         bot_silks.append(silks_info)
         logger.info(f"Added silk to key components done.")
         silks_file = path(self.board_file).with_suffix('.silks.txt')
-        silks_file.write_text('\n'.join(top_silks) + '\n\n' + '\n'.join(bot_silks))
+        silks_file.write_text('\n'.join(top_silks) +
+                              '\n\n' + '\n'.join(bot_silks))
 
-    def run_add_text(self, config:TextConfig):
+    def run_add_text(self, config: TextConfig):
         dirname = PADSPROD_ROOT
         origin = mcrPPcbCmdList['PPcbDraftingText']
         macro_file = path.joinpath(dirname, 'macros', origin)
