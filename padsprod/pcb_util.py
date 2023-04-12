@@ -475,11 +475,11 @@ class PCB(object):
             if self.brd_view_size_width > self.brd_view_size_depth:
                 self.brd_size_width  = self.get_size_in_mil(drawing_dim[0])
                 self.brd_size_depth  = self.get_size_in_mil(drawing_dim[1])
-                self.brd_size_height = self.get_size_in_mil(drawing_dim[2])
+                self.brd_size_height = self.get_size_in_mil(drawing_dim[len(drawing_dim)-1])
             else:
                 self.brd_size_width  = self.get_size_in_mil(drawing_dim[1])
                 self.brd_size_depth  = self.get_size_in_mil(drawing_dim[0])
-                self.brd_size_height = self.get_size_in_mil(drawing_dim[2])
+                self.brd_size_height = self.get_size_in_mil(drawing_dim[len(drawing_dim)-1])
         # delete selected obj
         if remove_board_outside_keepouts:
             self.run_macro_ppcb_delete_selected()
