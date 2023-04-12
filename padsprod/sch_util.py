@@ -172,7 +172,9 @@ class SCH(object):
         logger.info(f'This SCH file includes Components: {self.board.Components.Count}, Sheets: {self.sheets.Count}')
         for sht_idx, _sheet in enumerate(self.sheets):
             sheet = IPowerLogicSheet(_sheet)
-            logger.info(f'Page{sht_idx+1}: {sheet.Name}')
+            _name = bytes(sheet.Name, encoding='raw_unicode_escape')
+            _name = _name.decode('gbk')
+            logger.info(f'Page{sht_idx+1}: {_name}')
 
     def set_visible(self, visible):
         self.app.Visible = visible
