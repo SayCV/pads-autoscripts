@@ -260,7 +260,9 @@ class PCB(object):
         pcb_thick = 0
         for idx, _layer in enumerate(self.layers):
             layer = IPowerPCBLayer(_layer)
-            print(f' -> L{idx+1:02d}: {layer.Name}')
+            _name = bytes(layer.Name, encoding='raw_unicode_escape')
+            _name = _name.decode('gbk')
+            print(f' -> L{idx+1:02d}: {_name}')
             if layer.type == ppcbLayerRouting or layer.type == ppcbLayerComponent:
                 metal_layers_count += 1
                 pcb_thick += layer.CopperThickness
