@@ -457,9 +457,14 @@ class PCB(object):
                 elif drawing.DrawingType == ppcbDrw2Dline:
                     if drawing.Name.startswith('DIM'):
                         texts = drawing.Texts
-                        text = texts[0].text
-                        drawing_dim.append(text)
-                    logger.debug(f"Found 2DLine in {type_count}: {drawing.Name}: {drawing.PositionX}, {drawing.PositionY}")
+                        text = IPowerPCBText(texts[0])
+                        text_drawing = IPowerPCBDrawing(text.obj.Drawing)
+                        text_px = text_drawing.PositionX
+                        text_py = text_drawing.PositionY
+                        drawing_dim.append(text.Text)
+                        logger.debug(f"Found DIM 2DLine in {type_count}: {drawing.Name}: {text_px}, {text_py}")
+                    else:
+                        logger.debug(f"Found 2DLine in {type_count}: {drawing.Name}: {drawing.PositionX}, {drawing.PositionY}")
                 if type_count > 100:
                     # save time
                     break
@@ -601,6 +606,7 @@ class PCB(object):
             # self.set_layer_color_by_id(layer_number, color_idxs)
             #layer = self.get_layer_by_name('Top')
             #layer.SetColor(PPcbLayerColorType.ppcbLayerColorText, PPcbDefaultPaletteColorList.get_idx('white'))
+            self.remove_outside_board_text()
             self.add_silk_to_power_nets()
             self.added_pwrsilk = True
         # No affect
@@ -901,3 +907,30 @@ class PCB(object):
         path.write_text(macro_file, macro_content)
 
         self.run_macro(macro_file)
+
+    def remove_outside_board_text(self):
+        logger.debug(f"Found outside text: {len(self.board.Texts)}")
+        outside_text_count = 0
+        type_count = 0
+        for _text in self.board.Texts:
+            type_count += 1
+            text = IPowerPCBText(_text)
+            text_obj = text.obj
+            text_px = text_obj.PositionX
+            text_py = text_obj.PositionY
+            text_layer_id = text.obj.layer
+
+            if_del = False
+            if text_layer_id < self.board.ElectricalLayerCount + 1:
+                if text_px < self.view_top_left_mils[0] or text_px > self.view_bot_right_mils[0]:
+                    if_del = True
+                elif text_py < self.view_bot_right_mils[1] or text_py > self.view_top_left_mils[1]:
+                    if_del = True
+                if if_del:
+                    text.selected = if_del
+                    outside_text_count += 1
+            logger.debug(
+                f"Found outside text {outside_text_count} in {type_count}: {text.Text} selected = {if_del}")
+            pass
+        # delete selected obj
+        self.run_macro_ppcb_delete_selected()

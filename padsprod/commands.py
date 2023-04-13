@@ -42,6 +42,7 @@ def run_info(args):
             pcb.info()
         except Exception as e:
             logger.error(e)
+            traceback.print_exc()
         pcb.close()
     elif in_format == 'hyp' or in_format == 'pjh':
         board_file = input
